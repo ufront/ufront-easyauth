@@ -1,0 +1,15 @@
+{
+  "name": "ufront-easyauth",
+  "license": "MIT",
+  "tags": ["ufront","web","auth","neko","php","auth"],
+  "description": "A command line tool to help you manage your ufront project.",
+  "contributors": ["fponticelli","jason"],
+  "releasenote": "Initial Release",
+  "version": "1.0.0-beta.1",
+  "url": "https://github.com/ufront/ufront-easyauth",
+  "dependencies": {
+    "PBKDF2": "",
+    "ufront-mvc": "",
+    "ufront-orm": ""
+  }
+}
