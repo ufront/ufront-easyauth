@@ -11,6 +11,7 @@
   "dependencies": {
     "PBKDF2": "",
     "ufront-mvc": "",
-    "ufront-orm": ""
+    "ufront-orm": "",
+    "random": ""
   }
 }
