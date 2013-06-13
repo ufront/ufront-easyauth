@@ -5,8 +5,8 @@
   "tags": ["ufront","web","auth","neko","php","auth"],
   "description": "A command line tool to help you manage your ufront project.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Initial Release",
-  "version": "1.0.0-beta.1",
+  "releasenote": "Initial Release. For early adopters only at this point, things subject to change.",
+  "version": "1.0.0-alpha.1",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
     "PBKDF2": "",
