@@ -44,7 +44,7 @@ class User extends Object
 		return allUserPermissions.has(str);
 	}
 
-	@:skip var allUserPermissions:List<String>;
+	@:skip @:includeInSerialization var allUserPermissions:List<String>;
 	function loadUserPermissions()
 	{
 		#if server 
