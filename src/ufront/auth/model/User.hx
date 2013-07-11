@@ -1,5 +1,8 @@
 package ufront.auth.model;
 
+#if client 
+	import promhx.Promise;
+#end
 import ufront.db.Object;
 import ufront.db.ManyToMany;
 import sys.db.Types;
@@ -44,20 +47,28 @@ class User extends Object
 		return allUserPermissions.has(str);
 	}
 
-	@:skip @:includeInSerialization var allUserPermissions:List<String>;
+	@:skip var allUserPermissions:List<String>;
 	function loadUserPermissions()
 	{
-		#if server 
-			if (allUserPermissions == null)
-			{
-				var groupIDs = groups.map(function (g:Group) { return g.id; });
- 				var permissionList = Permission.manager.search($groupID in groupIDs);
-				allUserPermissions = permissionList.map(function (p:Permission) { return p.permission; });
-			}
-		#else 
-			// If we are on the client, and don't already have a list, the assumption that we have no permissions is better than assuming we have some.
-			if (allUserPermissions == null) allUserPermissions = new List();
-		#end
+		if (allUserPermissions == null)
+		{
+			var groupIDs = groups.map(function (g:Group) { return g.id; });
+			#if server 
+				var permissionList = Permission.manager.search($groupID in groupIDs);
+				allUserPermissions = permissionList.map(function (p:Permission) return p.permission);
+				
+			#else
+				#if ufront_clientds
+					var permissionList = new List();
+					for ( g in groups )
+						for ( p in g.permissions )
+							permissionList.add( p );
+					allUserPermissions = permissionList.map(function (p:Permission) return p.permission);
+				#else 
+					allUserPermissions = new List();
+				#end
+			#end
+		}
 	}
 
 	#if server 
