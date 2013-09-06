@@ -24,8 +24,7 @@ class User extends Object
 		super();
 		#if server 
 			this.username = u;
-			this.salt = Random.string(32);
-			this.password = generatePasswordHash(p, salt);
+			this.setPassword( p );
 			this.forcePasswordChange = false;
 		#end 
 	}
