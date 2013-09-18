@@ -10,7 +10,7 @@ using Lambda;
 
 @:table("auth_user")
 
-class User extends Object
+class User extends Object implements ufront.auth.IAuthUser
 {
 	public var username:SString<40>;
 	public var salt:SString<32>;
@@ -38,12 +38,18 @@ class User extends Object
 		#end
 	}
 
-	/** Check permissions.  if (myUser.can(DriveCar) && myUser.can(BorrowParentsCar)) { ... } */
-	public function can(e:EnumValue)
+	/** Check permissions.  if (myUser.can(DriveCar) or if (myUser.can([DriveCar,BorrowParentsCar])) { ... } */
+	public function can( ?permission:EnumValue, ?permissions:Iterable<EnumValue> )
 	{
 		loadUserPermissions();
-		var str = Permission.getPermissionID(e);
-		return allUserPermissions.has(str);
+		if (permission!=null) if ( !checkPermission(permission) ) return false;
+		if (permissions!=null) for ( p in permissions ) if ( !checkPermission(p) ) return false;
+		return true;
+	}
+
+	function checkPermission( p:EnumValue ) 
+	{
+		return allUserPermissions.has( Permission.getPermissionID(p) );
 	}
 
 	@:skip var allUserPermissions:List<String>;

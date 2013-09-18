@@ -7,7 +7,9 @@ import ufront.auth.*;
 import ufront.auth.PermissionError;
 import hxevents.Dispatcher;
 import hxevents.Notifier;
+import ufront.web.context.HttpContext;
 using tink.core.types.Outcome;
+import thx.error.NullArgument;
 
 /**
 	
@@ -15,17 +17,31 @@ using tink.core.types.Outcome;
 #if server
 	class EasyAuth implements IAuthHandler<User>
 	{
+		/**
+			Create an EasyAuth AuthHandler.
+
+			This is basically the same as the constructor, but makes for easy binding, especially helpful when passing to `HttpContext.create`
+	
+			For example, you can easily create a function that acts as an AuthHandler factory for each request:
+
+			```
+			var authFactory:HttpContext->IAuthHandler<IAuthUser> = EasyAuth.create.bind("mysessionname");
+			```
+		**/
+		public static inline function create( context:HttpContext, ?name:String ) {
+			return new EasyAuth( context, name );
+		}
+
 		/** Set to the number of seconds the session should last.  By default, value=0, which will end when the browser window/tab is closed. */
 		public static var sessionLength:Int = 0;
 		inline public static var DEFAULT_VARIABLE_NAME = "easyauth_session_storage"; 
 
-		/** Singleton instance **/
-		public static var inst = new EasyAuth();
-
 		var _name:String;
+		var context:HttpContext;
 
-		public function new( ?name:String ) {
+		public function new( context:HttpContext, ?name:String ) {
 			_name = (name!=null) ? name : DEFAULT_VARIABLE_NAME;
+			this.context = context;
 		}
 		
 		public function isLoggedIn() {
@@ -73,8 +89,8 @@ using tink.core.types.Outcome;
 		var _session:IHttpSessionState;
 		function get_session() {
 			if (_session == null) {
-				var cwd = #if php php.Web.getCwd() #elseif neko neko.Web.getCwd() #else Sys.getCwd() #end;
-				_session = FileSession.create(cwd + 'sessions', sessionLength);
+				_session = context.session;
+				NullArgument.throwIfNull( _session );
 			}
 			return _session;
 		}
