@@ -10,6 +10,12 @@ import ufront.auth.model.User;
 @:table("auth_group")
 class Group extends Object
 {
+	public function new( ?name:String ) {
+		super();
+		if (name!=null) 
+			this.name = name;
+	}
+	
 	public var name:SString<255>;
 
 	public var users:ManyToMany<Group, User>;
