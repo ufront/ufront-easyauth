@@ -5,8 +5,8 @@
   "tags": ["ufront","web","auth","neko","php","auth"],
   "description": "A command line tool to help you manage your ufront project.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Update for compatibility with ufront 1.0.0-beta.1",
-  "version": "1.0.0-beta.1",
+  "releasenote": "Small fix to EasyAuth.create, to avoid variance issues it now returns the generic IAuthHandler<IAuthUser>",
+  "version": "1.0.0-beta.2",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
     "PBKDF2": "",
