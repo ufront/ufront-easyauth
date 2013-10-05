@@ -27,9 +27,11 @@ import thx.error.NullArgument;
 			```
 			var authFactory:HttpContext->IAuthHandler<IAuthUser> = EasyAuth.create.bind("mysessionname");
 			```
+
+			The result of this is cast as `IAuthHandler<IAuthUser>`, rather than the actual `EasyAuth`, so that it can be used with as an auth factory without casting, as "IAuthUser" and "User" are invariant in this case.
 		**/
-		public static inline function create( context:HttpContext, ?name:String ) {
-			return new EasyAuth( context, name );
+		public static inline function create( ?context:HttpContext, ?name:String ):IAuthHandler<IAuthUser> {
+			return cast new EasyAuth( context, name );
 		}
 
 		/** Set to the number of seconds the session should last.  By default, value=0, which will end when the browser window/tab is closed. */
@@ -65,7 +67,7 @@ import thx.error.NullArgument;
 		}
 
 		public function hasPermissions( permissions:Iterable<EnumValue> ) {
-			for (p in permissions) {
+			for ( p in permissions ) {
 				if ( !hasPermission(p) ) return false;
 			}
 			return true;
@@ -79,7 +81,7 @@ import thx.error.NullArgument;
 		}
 
 		public function requirePermissions( permissions:Iterable<EnumValue> ) {
-			for (p in permissions) {
+			for ( p in permissions ) {
 				requirePermission( p );
 			}
 		}
@@ -88,7 +90,7 @@ import thx.error.NullArgument;
 		
 		var _session:IHttpSessionState;
 		function get_session() {
-			if (_session == null) {
+			if ( _session==null ) {
 				_session = context.session;
 				NullArgument.throwIfNull( _session );
 			}
