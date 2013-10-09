@@ -103,7 +103,7 @@ import thx.error.NullArgument;
 		function get_currentUser() {
 			if (_currentUser == null) {
 				if (session.exists(_name)) {
-					var userID = session.get(_name);
+					var userID:Null<Int> = session.get(_name);
 					if (userID!=null) {
 						_currentUser = User.manager.get( userID );
 					}
