@@ -4,7 +4,7 @@ import ufront.auth.*;
 import ufront.auth.model.User;
 import ufront.auth.*;
 import ufront.auth.PermissionError;
-using tink.core.types.Outcome;
+using tink.CoreApi;
 
 class EasyAuthDBAdapter implements IAuthAdapter<User>
 {
@@ -16,22 +16,25 @@ class EasyAuthDBAdapter implements IAuthAdapter<User>
 		suppliedPassword = password;
 	}
 
-	public function authenticate():Outcome<User,PermissionError> {
-		#if server
-			if ( suppliedUsername==null ) { UserError('No username was supplied').asFailure(); }
-			if ( suppliedPassword==null ) { UserError('No password was supplied').asFailure(); }
+	public function authenticate():Surprise<User,PermissionError> {
+		var t = Future.trigger();
 
-			var u = User.manager.select($username == suppliedUsername);
-			if (u != null) 
-			{
+		#if server
+			if ( suppliedUsername==null ) t.trigger( Failure(UserError('No username was supplied')) );
+			if ( suppliedPassword==null ) t.trigger( Failure(UserError('No password was supplied')) );
+
+			var u = User.manager.select( $username==suppliedUsername );
+			if (u != null) {
 				if ( u.password==User.generatePasswordHash(suppliedPassword, u.salt) ) {
-					return u.asSuccess();
+					t.trigger( Success(u) );
 				}
 			}
 			// If that failed, it must have been wrong...
-			return InvalidCredentials('Username or password was incorrect.').asFailure();
+			t.trigger( Failure(InvalidCredentials('Username or password was incorrect.')) );
 		#else 
-			return SystemError("DBUserAuthAdapter can only authenticate() on the server").asFailure();
+			t.trigger( Failure(SystemError("DBUserAuthAdapter can only authenticate() on the server")) );
 		#end
+
+		return t.asFuture();
 	}
 }

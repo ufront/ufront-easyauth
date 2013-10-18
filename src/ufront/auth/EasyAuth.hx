@@ -5,10 +5,8 @@ import ufront.easyauth.model.*;
 import ufront.auth.model.*;
 import ufront.auth.*;
 import ufront.auth.PermissionError;
-import hxevents.Dispatcher;
-import hxevents.Notifier;
 import ufront.web.context.HttpContext;
-using tink.core.types.Outcome;
+using tink.CoreApi;
 import thx.error.NullArgument;
 
 /**
@@ -17,26 +15,10 @@ import thx.error.NullArgument;
 #if server
 	class EasyAuth implements IAuthHandler<User>
 	{
-		/**
-			Create an EasyAuth AuthHandler.
-
-			This is basically the same as the constructor, but makes for easy binding, especially helpful when passing to `HttpContext.create`
-	
-			For example, you can easily create a function that acts as an AuthHandler factory for each request:
-
-			```
-			var authFactory:HttpContext->IAuthHandler<IAuthUser> = EasyAuth.create.bind("mysessionname");
-			```
-
-			The result of this is cast as `IAuthHandler<IAuthUser>`, rather than the actual `EasyAuth`, so that it can be used with as an auth factory without casting, as "IAuthUser" and "User" are invariant in this case.
-		**/
-		public static inline function create( ?context:HttpContext, ?name:String ):IAuthHandler<IAuthUser> {
-			return cast new EasyAuth( context, name );
-		}
-
 		/** Set to the number of seconds the session should last.  By default, value=0, which will end when the browser window/tab is closed. */
 		public static var sessionLength:Int = 0;
-		inline public static var DEFAULT_VARIABLE_NAME = "easyauth_session_storage"; 
+
+		inline static var DEFAULT_VARIABLE_NAME = "easyauth_session_storage"; 
 
 		var _name:String;
 		var context:HttpContext;
@@ -112,22 +94,42 @@ import thx.error.NullArgument;
 			return _currentUser;
 		}
 
-		public function startSession( authAdapter:EasyAuthDBAdapter ):Outcome<User,PermissionError>
-		{
+		public function startSession( authAdapter:EasyAuthDBAdapter ):Surprise<User,PermissionError> {
 			endSession();
 
-			var result = authAdapter.authenticate();
-			switch ( result ) {
-				case Success(user):
-					session.set(_name, user.id);
-				case Failure(_):
-			}
+			var resultFuture = authAdapter.authenticate();
+			resultFuture.handle( function(r) {
+				switch ( r ) {
+					case Success(user): session.set(_name, user.id);
+					case Failure(_):
+				}
+			});
 
-			return result;
+			return resultFuture;
 		}
 
 		public function endSession() {
 			if (session.exists(_name)) session.remove(_name);
+		}
+
+		static var _factory:EasyAuthFactory;
+		public static function getFactory( ?name:String ) {
+			if ( _factory==null || _factory.name!=name ) 
+				_factory = new EasyAuthFactory( name );
+			
+			return _factory;
+		}
+	}
+
+	class EasyAuthFactory implements IAuthFactory {
+		public var name(default,null):Null<String>;
+
+		public function new( ?name:String ) {
+			this.name = name;
+		}
+
+		public function create( context:HttpContext ) {
+			return cast new EasyAuth( context, name );
 		}
 	}
 #end 
