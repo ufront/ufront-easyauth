@@ -10,7 +10,7 @@ using Lambda;
 
 @:table("auth_user")
 
-class User extends Object implements ufront.auth.IAuthUser
+class User extends Object implements ufront.auth.UFAuthUser
 {
 	public var username:SString<40>;
 	public var salt:SString<32>;

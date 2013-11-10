@@ -2,7 +2,7 @@ package ufront.auth;
 
 // import ufront.auth.storage.SessionStorage;
 // import ufront.web.session.FileSession;
-// import ufront.auth.IAuthAdapter;
+// import ufront.auth.UFAuthAdapter;
 // import ufront.auth.Auth;
 // import ufront.auth.model.User;
 // import ufront.auth.DBUserAuthAdapter;

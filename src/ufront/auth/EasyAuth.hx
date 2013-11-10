@@ -13,7 +13,7 @@ import thx.error.NullArgument;
 	
 **/
 #if server
-	class EasyAuth implements IAuthHandler<User>
+	class EasyAuth implements UFAuthHandler<User>
 	{
 		/** Set to the number of seconds the session should last.  By default, value=0, which will end when the browser window/tab is closed. */
 		public static var sessionLength:Int = 0;
@@ -68,9 +68,9 @@ import thx.error.NullArgument;
 			}
 		}
 
-		public var session(get,null):IHttpSessionState;
+		public var session(get,null):UFHttpSessionState;
 		
-		var _session:IHttpSessionState;
+		var _session:UFHttpSessionState;
 		function get_session() {
 			if ( _session==null ) {
 				_session = context.session;
@@ -121,7 +121,7 @@ import thx.error.NullArgument;
 		}
 	}
 
-	class EasyAuthFactory implements IAuthFactory {
+	class EasyAuthFactory implements UFAuthFactory {
 		public var name(default,null):Null<String>;
 
 		public function new( ?name:String ) {

@@ -1,10 +1,11 @@
 package ufront.auth;
 
 import ufront.web.context.HttpContext;
-import ufront.module.IHttpModule;
-import ufront.application.HttpApplication;
+import ufront.app.UFMiddleware;
+import ufront.app.HttpApplication;
 import tink.CoreApi;
-import ufront.core.AsyncCallback;
+import ufront.core.Sync;
+import ufront.web.HttpError;
 using Types;
 
 /**
@@ -12,37 +13,35 @@ using Types;
 
 	It will:
 
-	 - Check for a SessionID in the parameters.  If it exists and is a valid session, it will initialize it.
-	 - Check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.  `request.authorization` values will have precedence over values from `request.params`.
+	 - Check if you are already logged in
+	 - If not, check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.  `request.authorization` values will have precedence over values from `request.params`.
+	 - Currently only works with EasyAuth as the AuthHandler, and EasyAuthDBAdapter as the AuthAdapter.  This may be more flexible in future
 
 	@author Jason O'Neil
 **/
-class InlineEasyAuthModule implements IHttpModule
+class InlineEasyAuthModule implements UFRequestMiddleware
 {
 	public function new() {}
 
-	public function init( app:HttpApplication ) {
-		app.onBeginRequest.handle( initAuth );
-	}
-
-	function initAuth( ctx:HttpContext ) {
+	public function requestIn( ctx:HttpContext ):Surprise<Noise,HttpError> {
 		var t = Future.trigger();
 
 		var s = ctx.session;
 		var a = ctx.auth;
 
-		var sessionReady = ctx.session.init();
-		sessionReady.handle( function(res) {
+		// Wait for the session to init() - it might not have if they don't have InlineSessionMiddleware enabled
+		ctx.session.init().handle( function(res) {
 			
 			// See if there is an already active session
 			var isLoggedIn = false;
 			switch res {
 				case Success(_):
-					if ( s.isActive() && a.isLoggedIn() ) {
+					if ( a.isLoggedIn() ) {
 						isLoggedIn = true;
-						t.trigger( Completed );
+						t.trigger( Success(Noise) );
 					}
 				case Failure(err):
+					// Session failed to start... weird, but we'll continue anyway.  Log the error.
 					ctx.ufError( 'Failed to start session: $err' );
 			}
 
@@ -61,19 +60,28 @@ class InlineEasyAuthModule implements IHttpModule
 					}
 
 					if ( username!=null && password!=null ) {
-						var f = ea.startSession( new EasyAuthDBAdapter(username, password) );
-						f.handle( t.trigger.bind(Completed) );
+						var surprise = ea.startSession( new EasyAuthDBAdapter(username, password) );
+						surprise.handle( function (outcome) switch(outcome) {
+							case Success(u): 
+								ctx.ufTrace( 'Logged in as $username ($u) inline' );
+								t.trigger( Success(Noise) );
+							case Failure(e): 
+								// Their login failed.  Even though this is inline and they may not need auth 
+								// for their request, they attempted to log in with incorrect credentials, 
+								// therefore give an error.
+								ctx.ufError( 'Failed to log in as $username: $e' );
+								t.trigger( Failure(HttpError.unauthorized()) );
+						});
 						attemptedLogin = true;
 					}
 
 				});
 				if ( !attemptedLogin )
-					t.trigger( Completed );
+					// No login was attempted, just continue with the request
+					t.trigger( Success(Noise) );
 			}
 		});
 		
 		return t.asFuture();
 	}
-
-	public function dispose() {};
 }

@@ -6,7 +6,7 @@ import ufront.auth.*;
 import ufront.auth.PermissionError;
 using tink.CoreApi;
 
-class EasyAuthDBAdapter implements IAuthAdapter<User>
+class EasyAuthDBAdapter implements UFAuthAdapter<User>
 {
 	var suppliedUsername:String;
 	var suppliedPassword:String;
