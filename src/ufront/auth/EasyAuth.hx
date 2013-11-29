@@ -79,7 +79,7 @@ import thx.error.NullArgument;
 			return _session;
 		}
 
-		public var currentUser(get,null):User;
+		public var currentUser(get,set):User;
 
 		var _currentUser:User;
 		function get_currentUser() {
@@ -92,6 +92,11 @@ import thx.error.NullArgument;
 				}
 			}
 			return _currentUser;
+		}
+		function set_currentUser( u:User ) {
+			_currentUser = u;
+			session.set(_name, (u!=null) ? u.id : null);
+			return u;
 		}
 
 		public function startSession( authAdapter:EasyAuthDBAdapter ):Surprise<User,PermissionError> {
