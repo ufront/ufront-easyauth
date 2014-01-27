@@ -1,5 +1,6 @@
 package ufront.auth.model;
 
+import ufront.auth.model.User;
 import ufront.db.Object;
 import ufront.auth.model.Group;
 import sys.db.Types;
@@ -8,7 +9,8 @@ import sys.db.Types;
 class Permission extends Object
 {
 	public var permission:SString<255>;
-	public var group:BelongsTo<Group>;
+	public var group:Null<BelongsTo<Group>>;
+	public var user:Null<BelongsTo<User>>;
 
 	public static function getPermissionID(e:EnumValue):String
 	{
@@ -17,10 +19,11 @@ class Permission extends Object
 	}
 
 	#if server 
-		public static function addPermission(g:Group, p:EnumValue)
+		public static function grantPermission(?u:User, ?g:Group, p:EnumValue)
 		{
 			var item = new Permission();
 			item.permission = getPermissionID(p);
+			item.user = u;
 			item.group = g;
 			item.insert();
 		}
@@ -33,18 +36,6 @@ class Permission extends Object
 			{
 				item.delete();
 			}
-		}
-
-		public static function checkGroupHasPermission(g:Group, p:EnumValue):Bool
-		{
-			var pString = getPermissionID(p);
-			var count = Permission.manager.count($groupID == g.id && $permission == pString);
-			return (count > 0) ? true : false;
-		}
-
-		public static function checkUserHasPermission(u:User, p:EnumValue)
-		{
-
 		}
 	#end
 }

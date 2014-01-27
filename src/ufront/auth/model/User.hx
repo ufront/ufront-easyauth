@@ -17,6 +17,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 	public var password:SString<64>;
 	public var forcePasswordChange:Bool;
 
+	public var userPermissions:HasMany<Permission>;
 	public var groups:ManyToMany<User, Group>;
 
 	public function new(u:String, p:String)
@@ -42,6 +43,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 	public function can( ?permission:EnumValue, ?permissions:Iterable<EnumValue> )
 	{
 		loadUserPermissions();
+		if (allUserPermissions==null) return false; // Permissions not loaded yet...
 		if (permission!=null) if ( !checkPermission(permission) ) return false;
 		if (permissions!=null) for ( p in permissions ) if ( !checkPermission(p) ) return false;
 		return true;
@@ -57,23 +59,20 @@ class User extends Object implements ufront.auth.UFAuthUser
 	{
 		if (allUserPermissions == null)
 		{
-			var groupIDs = groups.map(function (g:Group) { return g.id; });
-			#if server 
-				var permissionList = Permission.manager.search($groupID in groupIDs);
-				allUserPermissions = permissionList.map(function (p:Permission) return p.permission);
-				
-			#else
-				#if ufront_clientds
-					var permissionList = new List();
-					for ( g in groups )
-						for ( p in g.permissions )
-							permissionList.add( p );
-					allUserPermissions = permissionList.map(function (p:Permission) return p.permission);
-				#else 
-					allUserPermissions = new List();
-				#end
+			allUserPermissions = new List();
+			#if (server || ufront_clientds)
+				for ( g in groups )
+					for ( p in g.permissions )
+						allUserPermissions.add( p.permission );
+				for ( p in userPermissions )
+					allUserPermissions.add( p.permission );
 			#end
 		}
+	}
+
+	override public function toString()
+	{
+		return username;
 	}
 
 	#if server 
