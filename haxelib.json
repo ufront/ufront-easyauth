@@ -5,8 +5,8 @@
   "tags": ["ufront","web","auth","neko","php","auth"],
   "description": "A command line tool to help you manage your ufront project.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Compatibility with ufront-mvc 1.0.0-beta.3",
-  "version": "1.0.0-beta.3",
+  "releasenote": "Added per-user permissions. Also added ability to set current user, for 'login as' functionality.  Use with care.",
+  "version": "1.0.0-beta.4",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
     "PBKDF2": "",
