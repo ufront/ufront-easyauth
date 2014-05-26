@@ -19,6 +19,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 
 	public var userPermissions:HasMany<Permission>;
 	public var groups:ManyToMany<User, Group>;
+	@:skip public var userID(get,null):String;
 
 	public function new(u:String, p:String)
 	{
@@ -47,6 +48,10 @@ class User extends Object implements ufront.auth.UFAuthUser
 		if (permission!=null) if ( !checkPermission(permission) ) return false;
 		if (permissions!=null) for ( p in permissions ) if ( !checkPermission(p) ) return false;
 		return true;
+	}
+
+	function get_userID() {
+		return username;
 	}
 
 	function checkPermission( p:EnumValue ) 

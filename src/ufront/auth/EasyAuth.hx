@@ -105,7 +105,8 @@ import thx.error.NullArgument;
 			var resultFuture = authAdapter.authenticate();
 			resultFuture.handle( function(r) {
 				switch ( r ) {
-					case Success(user): session.set(_name, user.id);
+					case Success(user): 
+						session.set(_name, user.id);
 					case Failure(_):
 				}
 			});
@@ -114,7 +115,18 @@ import thx.error.NullArgument;
 		}
 
 		public function endSession() {
-			if (session.exists(_name)) session.remove(_name);
+			if (session.exists(_name)) {
+				session.remove(_name);
+			}
+		}
+
+		/**
+			Fetch the user by their username.  
+
+			(Note well: username, not database row ID.)
+		**/
+		public function getUserByID( id:String ) {
+			return User.manager.select( $username==id );
 		}
 
 		static var _factory:EasyAuthFactory;
