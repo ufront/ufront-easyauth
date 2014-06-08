@@ -9,7 +9,7 @@ import sys.db.Types;
 using Lambda;
 
 @:table("auth_user")
-
+@:index(username,unique)
 class User extends Object implements ufront.auth.UFAuthUser
 {
 	public var username:SString<40>;
