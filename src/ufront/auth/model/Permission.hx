@@ -6,6 +6,8 @@ import ufront.auth.model.Group;
 import sys.db.Types;
 
 @:table("auth_group_permission")
+@:index(permission,groupID,unique)
+@:index(permission,userID,unique)
 class Permission extends Object
 {
 	public var permission:SString<255>;
@@ -21,17 +23,25 @@ class Permission extends Object
 	#if server 
 		public static function grantPermission(?u:User, ?g:Group, p:EnumValue)
 		{
-			var item = new Permission();
-			item.permission = getPermissionID(p);
-			item.user = u;
-			item.group = g;
-			item.insert();
+			var userID = (u!=null) ? u.id : null;
+			var groupID = (g!=null) ? g.id : null;
+			var pString = getPermissionID(p);
+			var count = Permission.manager.count($groupID == groupID && $userID == userID && $permission == pString);
+			if ( count==0 ) {
+				var item = new Permission();
+				item.permission = pString;
+				item.user = u;
+				item.group = g;
+				item.insert();
+			}
 		}
 
-		public static function revokePermission(g:Group, p:EnumValue)
+		public static function revokePermission(?u:User, ?g:Group, p:EnumValue)
 		{
 			var pString = getPermissionID(p);
-			var items = Permission.manager.search($groupID == g.id && $permission == pString);
+			var userID = (u!=null) ? u.id : null;
+			var groupID = (g!=null) ? g.id : null;
+			var items = Permission.manager.search($groupID == groupID && $userID == userID && $permission == pString);
 			for (item in items)
 			{
 				item.delete();
