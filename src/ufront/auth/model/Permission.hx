@@ -5,7 +5,7 @@ import ufront.db.Object;
 import ufront.auth.model.Group;
 import sys.db.Types;
 
-@:table("auth_group_permission")
+@:table("auth_permission")
 @:index(permission,groupID,unique)
 @:index(permission,userID,unique)
 class Permission extends Object
