@@ -3,7 +3,7 @@ package ufront.auth;
 import ufront.web.session.*;
 import ufront.easyauth.model.*;
 import ufront.auth.model.*;
-import ufront.auth.*;
+import ufront.auth.UFAuthAdapter;
 import ufront.auth.PermissionError;
 import ufront.web.context.HttpContext;
 using tink.CoreApi;
@@ -99,7 +99,7 @@ import thx.error.NullArgument;
 			return u;
 		}
 
-		public function startSession( authAdapter:EasyAuthDBAdapter ):Surprise<User,PermissionError> {
+		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,PermissionError> {
 			endSession();
 
 			var resultFuture = authAdapter.authenticate();
@@ -112,6 +112,19 @@ import thx.error.NullArgument;
 			});
 
 			return resultFuture;
+		}
+
+		public function startSessionSync( authAdapter:UFAuthAdapterSync<User> ):Outcome<User,PermissionError> {
+			endSession();
+
+			var result = authAdapter.authenticateSync();
+			switch result {
+				case Success(user): 
+					session.set(_name, user.id);
+				case Failure(_):
+			}
+
+			return result;
 		}
 
 		public function endSession() {

@@ -2,11 +2,11 @@ package ufront.auth;
 
 import ufront.auth.*;
 import ufront.auth.model.User;
-import ufront.auth.*;
+import ufront.auth.UFAuthAdapter;
 import ufront.auth.PermissionError;
 using tink.CoreApi;
 
-class EasyAuthDBAdapter implements UFAuthAdapter<User>
+class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterSync<User>
 {
 	var suppliedUsername:String;
 	var suppliedPassword:String;
@@ -16,25 +16,23 @@ class EasyAuthDBAdapter implements UFAuthAdapter<User>
 		suppliedPassword = password;
 	}
 
-	public function authenticate():Surprise<User,PermissionError> {
-		var t = Future.trigger();
-
+	public function authenticateSync():Outcome<User,PermissionError> {
 		#if server
-			if ( suppliedUsername==null ) t.trigger( Failure(UserError('No username was supplied')) );
-			if ( suppliedPassword==null ) t.trigger( Failure(UserError('No password was supplied')) );
+			if ( suppliedUsername==null ) return Failure( UserError('No username was supplied') );
+			if ( suppliedPassword==null ) return Failure( UserError('No password was supplied') );
 
 			var u = User.manager.select( $username==suppliedUsername );
-			if (u != null) {
-				if ( u.password==User.generatePasswordHash(suppliedPassword, u.salt) ) {
-					t.trigger( Success(u) );
-				}
-			}
-			// If that failed, it must have been wrong...
-			t.trigger( Failure(InvalidCredentials('Username or password was incorrect.')) );
+			return
+				if ( u!=null && u.password==User.generatePasswordHash(suppliedPassword,u.salt) )
+					return Success( u );
+				else
+					return Failure( InvalidCredentials('Username or password was incorrect.') );
 		#else 
-			t.trigger( Failure(SystemError("DBUserAuthAdapter can only authenticate() on the server")) );
+			return Failure( SystemError("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuth.api.authenticate()`") );
 		#end
+	}
 
-		return t.asFuture();
+	public function authenticate():Surprise<User,PermissionError> {
+		return Future.sync( authenticateSync() );
 	}
 }
