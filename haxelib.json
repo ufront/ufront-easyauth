@@ -6,12 +6,12 @@
   "description": "A basic database based user-group-permission authentication system for ufront.",
   "contributors": ["fponticelli","jason"],
   "releasenote": "Added per-user permissions. Also added ability to set current user, for 'login as' functionality.  Use with care.",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-rc.1",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
-    "PBKDF2": "",
-    "ufront-mvc": "",
-    "ufront-orm": "",
-    "random": ""
+    "PBKDF2": "1.0.0",
+    "ufront-mvc": "1.0.0-rc.1",
+    "ufront-orm": "1.0.0-rc.1",
+    "random": "1.4.0"
   }
 }
