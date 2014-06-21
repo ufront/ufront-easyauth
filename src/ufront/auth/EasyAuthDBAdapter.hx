@@ -3,7 +3,7 @@ package ufront.auth;
 import ufront.auth.*;
 import ufront.auth.model.User;
 import ufront.auth.UFAuthAdapter;
-import ufront.auth.PermissionError;
+import ufront.auth.AuthError;
 using tink.CoreApi;
 
 class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterSync<User>
@@ -16,23 +16,23 @@ class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterS
 		suppliedPassword = password;
 	}
 
-	public function authenticateSync():Outcome<User,PermissionError> {
+	public function authenticateSync():Outcome<User,AuthError> {
 		#if server
-			if ( suppliedUsername==null ) return Failure( UserError('No username was supplied') );
-			if ( suppliedPassword==null ) return Failure( UserError('No password was supplied') );
+			if ( suppliedUsername==null ) return Failure( LoginFailed('No username was supplied') );
+			if ( suppliedPassword==null ) return Failure( LoginFailed('No password was supplied') );
 
 			var u = User.manager.select( $username==suppliedUsername );
 			return
 				if ( u!=null && u.password==User.generatePasswordHash(suppliedPassword,u.salt) )
 					return Success( u );
 				else
-					return Failure( InvalidCredentials('Username or password was incorrect.') );
+					return Failure( LoginFailed('Username or password was incorrect.') );
 		#else 
-			return Failure( SystemError("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuth.api.authenticate()`") );
+			return Failure( LoginFailed("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuth.api.authenticate()`") );
 		#end
 	}
 
-	public function authenticate():Surprise<User,PermissionError> {
+	public function authenticate():Surprise<User,AuthError> {
 		return Future.sync( authenticateSync() );
 	}
 }
