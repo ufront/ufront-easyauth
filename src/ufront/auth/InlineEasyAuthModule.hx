@@ -6,6 +6,7 @@ import ufront.app.HttpApplication;
 import tink.CoreApi;
 import ufront.core.Sync;
 import ufront.web.HttpError;
+import tink.core.Error;
 using Types;
 
 /**
@@ -23,7 +24,7 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 {
 	public function new() {}
 
-	public function requestIn( ctx:HttpContext ):Surprise<Noise,HttpError> {
+	public function requestIn( ctx:HttpContext ):Surprise<Noise,Error> {
 		var t = Future.trigger();
 
 		var s = ctx.session;

@@ -4,7 +4,7 @@ import ufront.web.session.*;
 import ufront.easyauth.model.*;
 import ufront.auth.model.*;
 import ufront.auth.UFAuthAdapter;
-import ufront.auth.PermissionError;
+import ufront.auth.AuthError;
 import ufront.web.context.HttpContext;
 using tink.CoreApi;
 import thx.error.NullArgument;
@@ -33,7 +33,7 @@ import thx.error.NullArgument;
 		}
 
 		public function requireLogin() {
-			if ( !isLoggedIn() ) throw NotLoggedIn("Not logged in");
+			if ( !isLoggedIn() ) throw NotLoggedIn;
 		}
 
 		public function isLoggedInAs( user:User ) {
@@ -41,7 +41,7 @@ import thx.error.NullArgument;
 		}
 
 		public function requireLoginAs( user:User ) {
-			if ( !isLoggedInAs(user) ) throw DoesNotHavePermission('Logged in as ${currentUser.username}, expected ${user.username}');
+			if ( !isLoggedInAs(user) ) throw NotLoggedInAs( user );
 		}
 
 		public function hasPermission( permission:EnumValue ) {
@@ -58,7 +58,7 @@ import thx.error.NullArgument;
 		public function requirePermission( permission:EnumValue ) {
 			if ( !hasPermission(permission) ) {
 				var name = Type.enumConstructor(permission);
-				throw DoesNotHavePermission('Permission $name not satisfied');
+				throw NoPermission( permission );
 			}
 		}
 
@@ -99,7 +99,7 @@ import thx.error.NullArgument;
 			return u;
 		}
 
-		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,PermissionError> {
+		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,AuthError> {
 			endSession();
 
 			var resultFuture = authAdapter.authenticate();
@@ -114,7 +114,7 @@ import thx.error.NullArgument;
 			return resultFuture;
 		}
 
-		public function startSessionSync( authAdapter:UFAuthAdapterSync<User> ):Outcome<User,PermissionError> {
+		public function startSessionSync( authAdapter:UFAuthAdapterSync<User> ):Outcome<User,AuthError> {
 			endSession();
 
 			var result = authAdapter.authenticateSync();
