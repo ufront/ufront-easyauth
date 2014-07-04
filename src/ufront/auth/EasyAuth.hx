@@ -18,29 +18,54 @@ import thx.error.NullArgument;
 		/** Set to the number of seconds the session should last.  By default, value=0, which will end when the browser window/tab is closed. */
 		public static var sessionLength:Int = 0;
 
-		inline static var DEFAULT_VARIABLE_NAME = "easyauth_session_storage"; 
+		/** The default variable name to save the User ID to in the current session. Default is `easyauth_session_storage`. **/
+		public static var defaultSessionVariableName = "easyauth_session_storage"; 
 
-		var _name:String;
-		var context:HttpContext;
+		/**
+			The session variable name for the current auth handler.
+			If the dependency injector has a String with the name "easyAuthSessionVariableName", that value will be used.
+			If not, `defaultSessionVariableName` will be used.
+		**/
+		public var sessionVariableName(default,null):String;
+		
+		/** The current HttpContext, should be provided by injection. **/
+		@inject public var context(default,null):HttpContext;
 
-		public function new( context:HttpContext, ?name:String ) {
-			_name = (name!=null) ? name : DEFAULT_VARIABLE_NAME;
-			this.context = context;
+		/** The current session, pulled from the HttpContext. **/
+		public var session(get,null):Null<UFHttpSessionState>;
+
+		/** The current user, if logged in. Will be null if they are not logged in. **/
+		public var currentUser(get,null):Null<User>;
+
+		/**
+			Create a new EasyAuth handler.
+			You should usually create this using an `injector.instantiate(EasyAuth)` call so that dependency injection is handled correctly.
+		**/
+		public function new() {}
+
+		/** Run after injection has been completed. **/
+		@post function setVariableName() {
+			// Manually check for this injection, because if it's not provided we have a default - we don't want minject to throw an error.
+			sessionVariableName =
+				if ( context.injector.hasMapping(String,"easyAuthSessionVarName") )
+					context.injector.getInstance( String, "easyAuthSessionVarName" )
+				else defaultSessionVariableName;
 		}
 		
 		public function isLoggedIn() {
-			return session.exists(_name);
+			return session.exists(sessionVariableName);
 		}
 
 		public function requireLogin() {
 			if ( !isLoggedIn() ) throw NotLoggedIn;
 		}
 
-		public function isLoggedInAs( user:User ) {
-			return currentUser!=null && currentUser.id==user.id;
+		public function isLoggedInAs( user:UFAuthUser ) {
+			var u = Std.instance( user, User );
+			return ( u!=null && currentUser!=null && u.id==currentUser.id );
 		}
 
-		public function requireLoginAs( user:User ) {
+		public function requireLoginAs( user:UFAuthUser ) {
 			if ( !isLoggedInAs(user) ) throw NotLoggedInAs( user );
 		}
 
@@ -68,10 +93,17 @@ import thx.error.NullArgument;
 			}
 		}
 
-		public var session(get,null):UFHttpSessionState;
+		public function setCurrentUser( user:UFAuthUser ) {
+			var u = Std.instance( user, User );
+			if ( u!=null ) {
+				_currentUser = u;
+				session.set(sessionVariableName, (u!=null) ? u.id : null);
+			}
+			else throw 'Could not set the current user to $user, because that user is not a ufront.auth.model.User';
+		}
 		
 		var _session:UFHttpSessionState;
-		function get_session() {
+		inline function get_session() {
 			if ( _session==null ) {
 				_session = context.session;
 				NullArgument.throwIfNull( _session );
@@ -79,24 +111,18 @@ import thx.error.NullArgument;
 			return _session;
 		}
 
-		public var currentUser(get,set):User;
 
 		var _currentUser:User;
 		function get_currentUser() {
 			if (_currentUser == null) {
-				if (session.exists(_name)) {
-					var userID:Null<Int> = session.get(_name);
+				if (session.exists(sessionVariableName)) {
+					var userID:Null<Int> = session.get(sessionVariableName);
 					if (userID!=null) {
 						_currentUser = User.manager.get( userID );
 					}
 				}
 			}
 			return _currentUser;
-		}
-		function set_currentUser( u:User ) {
-			_currentUser = u;
-			session.set(_name, (u!=null) ? u.id : null);
-			return u;
 		}
 
 		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,AuthError> {
@@ -106,7 +132,7 @@ import thx.error.NullArgument;
 			resultFuture.handle( function(r) {
 				switch ( r ) {
 					case Success(user): 
-						session.set(_name, user.id);
+						session.set(sessionVariableName, user.id);
 					case Failure(_):
 				}
 			});
@@ -120,7 +146,7 @@ import thx.error.NullArgument;
 			var result = authAdapter.authenticateSync();
 			switch result {
 				case Success(user): 
-					session.set(_name, user.id);
+					session.set(sessionVariableName, user.id);
 				case Failure(_):
 			}
 
@@ -128,8 +154,8 @@ import thx.error.NullArgument;
 		}
 
 		public function endSession() {
-			if (session.exists(_name)) {
-				session.remove(_name);
+			if (session.exists(sessionVariableName)) {
+				session.remove(sessionVariableName);
 			}
 		}
 
@@ -140,26 +166,6 @@ import thx.error.NullArgument;
 		**/
 		public function getUserByID( id:String ) {
 			return User.manager.select( $username==id );
-		}
-
-		static var _factory:EasyAuthFactory;
-		public static function getFactory( ?name:String ) {
-			if ( _factory==null || _factory.name!=name ) 
-				_factory = new EasyAuthFactory( name );
-			
-			return _factory;
-		}
-	}
-
-	class EasyAuthFactory implements UFAuthFactory {
-		public var name(default,null):Null<String>;
-
-		public function new( ?name:String ) {
-			this.name = name;
-		}
-
-		public function create( context:HttpContext ) {
-			return cast new EasyAuth( context, name );
 		}
 	}
 #end 
