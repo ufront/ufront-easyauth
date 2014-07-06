@@ -32,7 +32,7 @@ import thx.error.NullArgument;
 		@inject public var context(default,null):HttpContext;
 
 		/** The current session, pulled from the HttpContext. **/
-		public var session(get,null):Null<UFHttpSessionState>;
+		public var session(default,null):Null<UFHttpSession>;
 
 		/** The current user, if logged in. Will be null if they are not logged in. **/
 		public var currentUser(get,null):Null<User>;
@@ -50,6 +50,7 @@ import thx.error.NullArgument;
 				if ( context.injector.hasMapping(String,"easyAuthSessionVarName") )
 					context.injector.getInstance( String, "easyAuthSessionVarName" )
 				else defaultSessionVariableName;
+			session = context.session;
 		}
 		
 		public function isLoggedIn() {
@@ -101,23 +102,14 @@ import thx.error.NullArgument;
 			}
 			else throw 'Could not set the current user to $user, because that user is not a ufront.auth.model.User';
 		}
-		
-		var _session:UFHttpSessionState;
-		inline function get_session() {
-			if ( _session==null ) {
-				_session = context.session;
-				NullArgument.throwIfNull( _session );
-			}
-			return _session;
-		}
 
 
 		var _currentUser:User;
 		function get_currentUser() {
-			if (_currentUser == null) {
-				if (session.exists(sessionVariableName)) {
-					var userID:Null<Int> = session.get(sessionVariableName);
-					if (userID!=null) {
+			if ( _currentUser==null ) {
+				if ( session.exists(sessionVariableName) ) {
+					var userID:Null<Int> = session.get( sessionVariableName );
+					if ( userID!=null ) {
 						_currentUser = User.manager.get( userID );
 					}
 				}
@@ -131,8 +123,8 @@ import thx.error.NullArgument;
 			var resultFuture = authAdapter.authenticate();
 			resultFuture.handle( function(r) {
 				switch ( r ) {
-					case Success(user): 
-						session.set(sessionVariableName, user.id);
+					case Success(user):
+						session.set( sessionVariableName, user.id );
 					case Failure(_):
 				}
 			});
@@ -146,7 +138,7 @@ import thx.error.NullArgument;
 			var result = authAdapter.authenticateSync();
 			switch result {
 				case Success(user): 
-					session.set(sessionVariableName, user.id);
+					session.set( sessionVariableName, user.id );
 				case Failure(_):
 			}
 
@@ -154,8 +146,8 @@ import thx.error.NullArgument;
 		}
 
 		public function endSession() {
-			if (session.exists(sessionVariableName)) {
-				session.remove(sessionVariableName);
+			if ( session.exists(sessionVariableName) ) {
+				session.remove( sessionVariableName );
 			}
 		}
 
