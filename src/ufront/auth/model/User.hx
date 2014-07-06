@@ -64,13 +64,20 @@ class User extends Object implements ufront.auth.UFAuthUser
 	{
 		if (allUserPermissions == null)
 		{
-			allUserPermissions = new List();
-			#if (server || ufront_clientds)
-				for ( g in groups )
-					for ( p in g.permissions )
+			#if server
+				var groupIDs = [ for (g in groups) g.id ];
+				var permissions = Permission.manager.search( $userID==this.id || $groupID in groupIDs );
+				allUserPermissions = permissions.map( function(p) return p.permission );
+				trace( allUserPermissions );
+			#else
+				allUserPermissions = new List();
+				#if ufront_clientds
+					for ( g in groups )
+						for ( p in g.permissions )
+							allUserPermissions.add( p.permission );
+					for ( p in userPermissions )
 						allUserPermissions.add( p.permission );
-				for ( p in userPermissions )
-					allUserPermissions.add( p.permission );
+				#end
 			#end
 		}
 	}
