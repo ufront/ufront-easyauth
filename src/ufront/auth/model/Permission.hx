@@ -27,6 +27,11 @@ class Permission extends Object
 			var groupID = (g!=null) ? g.id : null;
 			var pString = getPermissionID(p);
 			var count = Permission.manager.count($groupID == groupID && $userID == userID && $permission == pString);
+			if ( count>1 ) {
+				// We have too many... delete them all and recreate just one.
+				Permission.manager.delete($groupID == groupID && $userID == userID && $permission == pString);
+				count = 0;
+			}
 			if ( count==0 ) {
 				var item = new Permission();
 				item.permission = pString;
