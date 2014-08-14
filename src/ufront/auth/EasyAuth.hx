@@ -9,13 +9,13 @@ using tink.CoreApi;
 import thx.error.NullArgument;
 
 /**
-	
+
 **/
 #if server
 	class EasyAuth implements UFAuthHandler<User>
 	{
 		/** The default variable name to save the User ID to in the current session. Default is `easyauth_session_storage`. **/
-		public static var defaultSessionVariableName = "easyauth_session_storage"; 
+		public static var defaultSessionVariableName = "easyauth_session_storage";
 
 		/**
 			The session variable name for the current auth handler.
@@ -23,7 +23,7 @@ import thx.error.NullArgument;
 			If not, `defaultSessionVariableName` will be used.
 		**/
 		public var sessionVariableName(default,null):String;
-		
+
 		/** The current HttpContext, should be provided by injection. **/
 		@inject public var context(default,null):HttpContext;
 
@@ -44,7 +44,7 @@ import thx.error.NullArgument;
 					context.injector.getInstance( String, "easyAuthSessionVarName" )
 				else defaultSessionVariableName;
 		}
-		
+
 		public function isLoggedIn() {
 			return context.session.exists(sessionVariableName);
 		}
@@ -129,7 +129,7 @@ import thx.error.NullArgument;
 
 			var result = authAdapter.authenticateSync();
 			switch result {
-				case Success(user): 
+				case Success(user):
 					context.session.set( sessionVariableName, user.id );
 				case Failure(_):
 			}
@@ -144,7 +144,7 @@ import thx.error.NullArgument;
 		}
 
 		/**
-			Fetch the user by their username.  
+			Fetch the user by their username.
 
 			(Note well: username, not database row ID.)
 		**/
@@ -156,4 +156,4 @@ import thx.error.NullArgument;
 			return 'EasyAuth' + (currentUser!=null ? '[${currentUser.userID}]' : "");
 		}
 	}
-#end 
+#end

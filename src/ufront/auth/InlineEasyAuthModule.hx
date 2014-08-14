@@ -15,7 +15,8 @@ using Types;
 	It will:
 
 	 - Check if you are already logged in
-	 - If not, check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.  `request.authorization` values will have precedence over values from `request.params`.
+	 - If not, check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.
+	 - `request.authorization` values will have precedence over values from `request.params`.
 	 - Currently only works with EasyAuth as the AuthHandler, and EasyAuthDBAdapter as the AuthAdapter.  This may be more flexible in future
 
 	@author Jason O'Neil
@@ -32,7 +33,7 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 
 		// Wait for the session to init() - it might not have if they don't have InlineSessionMiddleware enabled
 		ctx.session.init().handle( function(res) {
-			
+
 			// See if there is an already active session
 			var isLoggedIn = false;
 			switch res {
@@ -63,12 +64,12 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 					if ( username!=null && password!=null ) {
 						var surprise = ea.startSession( new EasyAuthDBAdapter(username, password) );
 						surprise.handle( function (outcome) switch(outcome) {
-							case Success(u): 
+							case Success(u):
 								ctx.ufTrace( 'Logged in as $username ($u) inline' );
 								t.trigger( Success(Noise) );
-							case Failure(e): 
-								// Their login failed.  Even though this is inline and they may not need auth 
-								// for their request, they attempted to log in with incorrect credentials, 
+							case Failure(e):
+								// Their login failed.  Even though this is inline and they may not need auth
+								// for their request, they attempted to log in with incorrect credentials,
 								// therefore give an error.
 								ctx.ufError( 'Failed to log in as $username: $e' );
 								t.trigger( Failure(HttpError.unauthorized()) );
@@ -82,7 +83,7 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 					t.trigger( Success(Noise) );
 			}
 		});
-		
+
 		return t.asFuture();
 	}
 }
