@@ -5,8 +5,13 @@
   "tags": ["ufront","web","auth","neko","php","auth"],
   "description": "A basic database based user-group-permission authentication system for ufront.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Added per-user permissions. Also added ability to set current user, for 'login as' functionality.  Use with care.",
-  "version": "1.0.0-rc.1",
+  "releasenote": "
+Use dependency injection rather than a factory.
+Changed PermissionError to use the generic AuthError enum from ufront-mvc.
+Swap use of HttpError to use straight Error instead.
+Minor fixes and improvements.
+",
+  "version": "1.0.0-rc.2",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
     "PBKDF2": "1.0.0",
