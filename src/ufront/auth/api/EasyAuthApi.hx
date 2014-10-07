@@ -4,6 +4,7 @@ import ufront.api.UFApi;
 import ufront.auth.model.*;
 import ufront.auth.AuthError;
 import ufront.auth.EasyAuthDBAdapter;
+import ufront.auth.EasyAuth;
 using tink.CoreApi;
 
 /**
