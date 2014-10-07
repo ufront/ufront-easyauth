@@ -1,6 +1,6 @@
 package ufront.auth.model;
 
-#if client 
+#if (client && ufront_clientds)
 	import promhx.Promise;
 #end
 import ufront.db.Object;
