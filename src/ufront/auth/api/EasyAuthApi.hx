@@ -37,11 +37,39 @@ class EasyAuthApi extends UFApi {
 	public function logout():Void {
 		easyAuth.endSession();
 	}
+	
+	public function getUser( userID:Int ):Outcome<User,Error> {
+		return wrapInOutcome(function() {
+			easyAuth.requirePermission( EAPListAllUsers );
+			return User.manager.get( userID );
+		});
+	}
+	
+	public function getUserByUsername( username:String ):Outcome<User,Error> {
+		return wrapInOutcome(function() {
+			easyAuth.requirePermission( EAPListAllUsers );
+			return User.manager.select( $username==username );
+		});
+	}
 
 	public function getAllUsers():Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
 			return User.manager.all();
+		});
+	}
+	
+	public function getGroup( groupID:Int ):Outcome<Group,Error> {
+		return wrapInOutcome(function() {
+			easyAuth.requirePermission( EAPListAllGroups );
+			return Group.manager.get( groupID );
+		});
+	}
+	
+	public function getGroupByName( name:String ):Outcome<Group,Error> {
+		return wrapInOutcome(function() {
+			easyAuth.requirePermission( EAPListAllGroups );
+			return Group.manager.select( $name==name );
 		});
 	}
 
