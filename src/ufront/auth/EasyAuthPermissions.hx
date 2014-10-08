@@ -56,5 +56,7 @@ enum EasyAuthPermissions {
 
 	/** Edit any Group. **/
 	EAPEditAnyGroup;
-
+	
+	/** Can do anything - they are a superuser. **/
+	EAPCanDoAnything;
 }

@@ -4,6 +4,7 @@ import ufront.easyauth.model.*;
 import ufront.auth.model.*;
 import ufront.auth.UFAuthAdapter;
 import ufront.auth.AuthError;
+import ufront.auth.EasyAuthPermissions;
 import ufront.web.context.HttpContext;
 using tink.CoreApi;
 import thx.error.NullArgument;
@@ -29,6 +30,15 @@ import thx.error.NullArgument;
 
 		/** The current user, if logged in. Will be null if they are not logged in. **/
 		public var currentUser(get,null):Null<User>;
+		
+		/**
+			Does the current user have super-user status?
+			
+			This means they either have the EAPCanDoAnything permission, or nobody has that permission.
+			What this means is, until you set a superuser, everyone will count as a superuser.
+			This is potentially dangerous, but is required during the setup of your app.
+		**/
+		public var isSuperUser(get,null):Bool = null;
 
 		/**
 			Create a new EasyAuth handler.
@@ -46,7 +56,7 @@ import thx.error.NullArgument;
 		}
 
 		public function isLoggedIn() {
-			return context.session.exists(sessionVariableName);
+			return isSuperUser || context.session.exists(sessionVariableName);
 		}
 
 		public function requireLogin() {
@@ -55,7 +65,7 @@ import thx.error.NullArgument;
 
 		public function isLoggedInAs( user:UFAuthUser ) {
 			var u = Std.instance( user, User );
-			return ( u!=null && currentUser!=null && u.id==currentUser.id );
+			return isSuperUser || ( u!=null && currentUser!=null && u.id==currentUser.id );
 		}
 
 		public function requireLoginAs( user:UFAuthUser ) {
@@ -63,10 +73,12 @@ import thx.error.NullArgument;
 		}
 
 		public function hasPermission( permission:EnumValue ) {
-			return (currentUser!=null && currentUser.can(permission));
+			return isSuperUser || (currentUser!=null && currentUser.can(permission));
 		}
 
 		public function hasPermissions( permissions:Iterable<EnumValue> ) {
+			if ( isSuperUser ) return true;
+			
 			for ( p in permissions ) {
 				if ( !hasPermission(p) ) return false;
 			}
@@ -154,6 +166,25 @@ import thx.error.NullArgument;
 
 		public function toString() {
 			return 'EasyAuth' + (currentUser!=null ? '[${currentUser.userID}]' : "");
+		}
+
+		function get_isSuperUser() {
+			if ( isSuperUser==null ) {
+				isSuperUser = currentUser!=null && currentUser.can(EAPCanDoAnything);
+				#if server
+					if ( isSuperUser==false ) {
+						// If there are no super-users, then we are in a kind of "setup mode".
+						// Basically, until you have setup a superuser, everybody is a superuser.
+						// Otherwise you get stuck not being able to set things up because you don't have permission.
+						var numSuperUsers = Permission.manager.count( $permission==Permission.getPermissionID(EAPCanDoAnything) );
+						if ( numSuperUsers==0 ) {
+							isSuperUser = true;
+							context.ufWarn( 'Please note you have not set up a super-user yet, so we are treating everybody(!) as a super-user, even visitors. Please set up a super-user (with the EAPCanDoAnything permission) ASAP.' );
+						}
+					}
+				#end
+			}
+			return isSuperUser;
 		}
 	}
 #end
