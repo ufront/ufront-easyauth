@@ -176,7 +176,12 @@ import thx.error.NullArgument;
 						// If there are no super-users, then we are in a kind of "setup mode".
 						// Basically, until you have setup a superuser, everybody is a superuser.
 						// Otherwise you get stuck not being able to set things up because you don't have permission.
-						var numSuperUsers = Permission.manager.count( $permission==Permission.getPermissionID(EAPCanDoAnything) );
+						var numSuperUsers =
+							try Permission.manager.count( $permission==Permission.getPermissionID(EAPCanDoAnything) )
+							catch ( e:Dynamic ) {
+								if ( sys.db.TableCreate.exists(Permission.manager)==false ) 0;
+								else throw e;
+							}
 						if ( numSuperUsers==0 ) {
 							isSuperUser = true;
 							context.ufWarn( 'Please note you have not set up a super-user yet, so we are treating everybody(!) as a super-user, even visitors. Please set up a super-user (with the EAPCanDoAnything permission) ASAP.' );
