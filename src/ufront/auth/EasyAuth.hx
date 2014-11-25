@@ -192,4 +192,20 @@ import thx.error.NullArgument;
 			return isSuperUser;
 		}
 	}
+	
+	/**
+		A version of EasyAuth that acts in admin mode, useful for task runners etc.
+
+		Exactly the same, but `isSuperUser` is always true, so permissions checks always pass etc.
+	**/
+	class EasyAuthAdminMode extends EasyAuth {
+		public function new() {
+			super();
+			this.isSuperUser = true;
+		}
+		
+		override function get_currentUser() {
+			return null;
+		}
+	}
 #end
