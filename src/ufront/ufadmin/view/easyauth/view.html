@@ -1,0 +1,18 @@
+<h2>::username::</h2>
+
+<div class="btn-toolbar">
+	<a href="::baseUri::changePassword/::id::" class="btn btn-default">Change Password</a>
+	<a href="::baseUri::loginas/::id::" class="btn btn-default">Login as ::username::</a>
+</div>
+
+<h4>Groups</h4>
+
+::foreach groups::
+	<p><span class="label">::name::</span></p>
+::end::
+
+<h4>Permissions</h4>
+
+::foreach permissions::
+	<p><span class="label">::__current__::</span></p>
+::end::

@@ -1,0 +1,21 @@
+<h2>::title::</h2>
+
+<p class="info">
+	Showing ::users.length:: users.
+	<a href="::baseUri::users/new/" class="btn btn-primary pull-right">Create New User</a>
+</p>
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Username</th>
+			<th>Registered</th>
+		</tr>
+	</thead>
+	::foreach users::
+		<tr>
+			<td><a href="::baseUri::user/::username::/" title="View Profile">::username::</a></td>
+			<td>::created::</td>
+		</tr>
+	::end::
+</table>
