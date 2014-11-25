@@ -22,13 +22,14 @@ class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterS
 			if ( suppliedPassword==null ) return Failure( LoginFailed('No password was supplied') );
 
 			var u = User.manager.select( $username==suppliedUsername );
-			return
-				if ( u!=null && u.password==User.generatePasswordHash(suppliedPassword,u.salt) )
-					return Success( u );
-				else
-					return Failure( LoginFailed('Username or password was incorrect.') );
+			if ( u!=null && u.password.length==0 && u.salt.length==0 )
+				return Failure( LoginFailed('This user has not finished setting up their password.') );
+			if ( u!=null && u.password==User.generatePasswordHash(suppliedPassword,u.salt) )
+				return Success( u );
+			else
+				return Failure( LoginFailed('Username or password was incorrect.') );
 		#else 
-			return Failure( LoginFailed("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuth.api.authenticate()`") );
+			return Failure( LoginFailed("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuthApi.attemptLogin()`") );
 		#end
 	}
 

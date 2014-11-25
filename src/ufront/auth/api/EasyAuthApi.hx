@@ -128,7 +128,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	function userAllowedToAssignToGroup( group:Group ) {
+	private function userAllowedToAssignToGroup( group:Group ) {
 		if ( !easyAuth.hasPermission( EAPAssignAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPAssignOwnGroup) ) {
 				if ( easyAuth.currentUser.groups.has(group)==false )
@@ -158,7 +158,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	function userAllowedToAssignPermissions( permission:EnumValue ) {
+	private function userAllowedToAssignPermissions( permission:EnumValue ) {
 		if ( !easyAuth.hasPermission( EAPAssignAnyUserPermission ) ) {
 			if ( easyAuth.hasPermission(EAPAssignUserPermissionYouHave) ) {
 				if ( easyAuth.currentUser.can(permission)==false )
@@ -228,7 +228,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	function userAllowedToEditUsers( user:User ) {
+	private function userAllowedToEditUsers( user:User ) {
 		if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
 				if ( easyAuth.currentUser.id==user.id )
@@ -271,7 +271,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	function userAllowedToEditGroups( group:Group ) {
+	private function userAllowedToEditGroups( group:Group ) {
 		if ( !easyAuth.hasPermission( EAPEditAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnGroup) ) {
 				if ( easyAuth.currentUser.groups.has(group)==false )
@@ -291,7 +291,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 	
-	function wrapInOutcome<T>( fn:Void->T, ?pos:haxe.PosInfos ):Outcome<T,Error> {
+	private function wrapInOutcome<T>( fn:Void->T, ?pos:haxe.PosInfos ):Outcome<T,Error> {
 		return 
 			try Success( fn() )
 			catch (e:Dynamic) Failure( Error.withData('Internal Server Error', e, pos) );

@@ -21,12 +21,17 @@ class User extends Object implements ufront.auth.UFAuthUser
 	public var groups:ManyToMany<User, Group>;
 	@:skip public var userID(get,null):String;
 
-	public function new(u:String, p:String)
-	{
+	public function new( username:String, ?password:String ) {
 		super();
 		#if server 
-			this.username = u;
-			this.setPassword( p );
+			this.username = username;
+			if ( password!=null ) {
+				this.setPassword( password );
+			}
+			else {
+				this.salt = "";
+				this.password = "";
+			}
 			this.forcePasswordChange = false;
 		#end 
 	}
