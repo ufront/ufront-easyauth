@@ -84,4 +84,4 @@ class EasyAuthAdminModule extends UFAdminModule {
 		});
 	}
 }
-#else
+#end
