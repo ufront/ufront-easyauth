@@ -39,9 +39,15 @@ class User extends Object implements ufront.auth.UFAuthUser
 	/** Generate a new salt and password.  You will need to call save() yourself */
 	public function setPassword(password:String)
 	{
-		#if server 
-			this.salt = Random.string(32);
-			this.password = generatePasswordHash(password, salt);
+		#if server
+			if ( password!=null ) {
+				this.salt = Random.string(32);
+				this.password = generatePasswordHash(password, salt);
+			}
+			else {
+				this.salt = "";
+				this.password = "";
+			}
 		#end
 	}
 
