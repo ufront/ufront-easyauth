@@ -5,14 +5,14 @@
   "tags": ["ufront","web","auth","neko","php","auth"],
   "description": "A basic database based user-group-permission authentication system for ufront.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Dependency bumps, allow setPassword(null).",
-  "version": "1.0.0-rc.7",
+  "releasenote": "Stop using exact version dependencies, use `ufront` if you want exact dependencies.",
+  "version": "1.0.0-rc.8",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
-    "PBKDF2": "1.0.0",
-    "ufront-mvc": "1.0.0-rc.8",
-    "ufront-orm": "1.0.0-rc.7",
-    "random": "1.4.0",
-    "cleversort": "1.0.2"
+    "PBKDF2": "",
+    "ufront-mvc": "",
+    "ufront-orm": "",
+    "random": "",
+    "cleversort": ""
   }
 }
