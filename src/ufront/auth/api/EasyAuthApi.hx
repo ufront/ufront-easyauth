@@ -44,7 +44,7 @@ class EasyAuthApi extends UFApi {
 	
 		@param username The username of the user we wish to authentificate.
 		@param password The user entered password.
-		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
+		@return `true` if username and password are valid, false otherwise.
 	**/
 	public function authenticate( username:String, password:String):Bool {
 		var outcome = new EasyAuthDBAdapter(username, password).authenticateSync();
