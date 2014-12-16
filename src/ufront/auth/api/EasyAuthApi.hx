@@ -38,6 +38,23 @@ class EasyAuthApi extends UFApi {
 		easyAuth.endSession();
 	}
 	
+	/**
+		Authentification without storing sessions. Useful for development, testing or occasional client request.
+		In production sending credentials to the server multiple times should be avoided, use login/sessions instead.
+	
+		@param username The username of the user we wish to authentificate.
+		@param password The user entered password.
+		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
+	**/
+	public function authenticate( username:String, password:String):Bool {
+		var outcome = new EasyAuthDBAdapter(username, password).authenticateSync();
+		switch (outcome) {
+				case Success(data): return true;
+				case Failure(_): return false;
+		}
+		return false;
+	}
+	
 	public function getUser( userID:Int ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
