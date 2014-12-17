@@ -1,6 +1,6 @@
 package ufront.ufadmin.modules;
 
-#if ufront_ufadmin
+#if (ufront_ufadmin && server)
 
 import ufront.auth.model.*;
 import ufront.web.HttpError;

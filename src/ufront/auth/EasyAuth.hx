@@ -7,7 +7,7 @@ import ufront.auth.AuthError;
 import ufront.auth.EasyAuthPermissions;
 import ufront.web.context.HttpContext;
 using tink.CoreApi;
-import thx.error.NullArgument;
+import thx.core.error.NullArgument;
 
 /**
 

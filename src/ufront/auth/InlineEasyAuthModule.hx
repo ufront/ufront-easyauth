@@ -7,7 +7,6 @@ import tink.CoreApi;
 import ufront.core.Sync;
 import ufront.web.HttpError;
 import tink.core.Error;
-using Types;
 
 /**
 	Allow for inline authentication on any HttpRequest.
@@ -21,6 +20,7 @@ using Types;
 
 	@author Jason O'Neil
 **/
+#if server
 class InlineEasyAuthModule implements UFRequestMiddleware
 {
 	public function new() {}
@@ -49,7 +49,8 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 
 			if ( !isLoggedIn ) {
 				var attemptedLogin = false;
-				a.ifIs( EasyAuth, function(ea) {
+				if ( Std.is(a,EasyAuth) ) {
+					var ea = cast a;
 					var httpAuth = ctx.request.authorization;
 					var params = ctx.request.params;
 
@@ -77,7 +78,7 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 						attemptedLogin = true;
 					}
 
-				});
+				}
 				if ( !attemptedLogin )
 					// No login was attempted, just continue with the request
 					t.trigger( Success(Noise) );
@@ -87,3 +88,4 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 		return t.asFuture();
 	}
 }
+#end
