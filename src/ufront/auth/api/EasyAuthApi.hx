@@ -6,6 +6,7 @@ import ufront.auth.AuthError;
 import ufront.auth.EasyAuthDBAdapter;
 import ufront.auth.EasyAuth;
 import ufront.auth.EasyAuthPermissions;
+import ufront.db.DatabaseID;
 using tink.CoreApi;
 using Lambda;
 
@@ -55,7 +56,7 @@ class EasyAuthApi extends UFApi {
 		return false;
 	}
 	
-	public function getUser( userID:Int ):Outcome<User,Error> {
+	public function getUser( userID:DatabaseID<User> ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
 			return User.manager.get( userID );
@@ -76,7 +77,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 	
-	public function getGroup( groupID:Int ):Outcome<Group,Error> {
+	public function getGroup( groupID:DatabaseID<Group> ):Outcome<Group,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllGroups );
 			return Group.manager.get( groupID );
@@ -97,7 +98,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function getAllGroupsForUser( userID:Int ):Outcome<List<Group>,Error> {
+	public function getAllGroupsForUser( userID:DatabaseID<User> ):Outcome<List<Group>,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListGroupsForUser );
 			var user = User.manager.get( userID );
@@ -105,7 +106,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function getAllUsersInGroup( groupID:Int ):Outcome<List<User>,Error> {
+	public function getAllUsersInGroup( groupID:DatabaseID<Group> ):Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListUsersInGroups );
 			var group = Group.manager.get( groupID );
@@ -113,12 +114,12 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function getAllPermissionsForUser( userID:Int ):Outcome<List<EnumValue>,Error> {
+	public function getAllPermissionsForUser( userID:DatabaseID<User> ):Outcome<List<EnumValue>,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListUserPermissions );
 			var user = User.manager.get( userID );
 			var groupIDs = [ for (g in user.groups) g.id ];
-			var permissions = Permission.manager.search( $userID==userID || $groupID in groupIDs );
+			var permissions = Permission.manager.search( $userID==userID.toInt() || $groupID in groupIDs );
 			return permissions.map( function(p) {
 				var parts = p.permission.split( ":" );
 				var enumType = Type.resolveEnum( parts[0] );
@@ -155,7 +156,7 @@ class EasyAuthApi extends UFApi {
 		}
 	}
 
-	public function assignUserToGroup( userID:Int, groupID:Int ):Outcome<Noise,Error> {
+	public function assignUserToGroup( userID:DatabaseID<User>, groupID:DatabaseID<Group> ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			var group = Group.manager.get( groupID );
 			var user = User.manager.get( userID );
@@ -165,7 +166,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function removeUserFromGroup( userID:Int, groupID:Int ):Outcome<Noise,Error> {
+	public function removeUserFromGroup( userID:DatabaseID<User>, groupID:DatabaseID<Group> ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			var user = User.manager.get( userID );
 			var group = Group.manager.get( groupID );
@@ -185,15 +186,15 @@ class EasyAuthApi extends UFApi {
 		}
 	}
 
-	public function assignPermissionToUser( permission:EnumValue, userID:Int ):Outcome<Noise,Error> {
+	public function assignPermissionToUser( permission:EnumValue, userID:DatabaseID<User> ):Outcome<Noise,Error> {
 		var errors = [];
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
 			var pString = Permission.getPermissionID( permission );
-			var count = Permission.manager.count( $userID==userID && $permission==pString );
+			var count = Permission.manager.count( $userID==userID.toInt() && $permission==pString );
 			if ( count>1 ) {
 				// We have some duplicates... delete them all and recreate just one.
-				Permission.manager.delete( $userID==userID && $permission==pString );
+				Permission.manager.delete( $userID==userID.toInt() && $permission==pString );
 				count = 0;
 			}
 			if ( count==0 ) {
@@ -206,15 +207,15 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function assignPermissionToGroup( permission:EnumValue, groupID:Int ):Outcome<Noise,Error> {
+	public function assignPermissionToGroup( permission:EnumValue, groupID:DatabaseID<Group> ):Outcome<Noise,Error> {
 		var errors = [];
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
 			var pString = Permission.getPermissionID( permission );
-			var count = Permission.manager.count( $groupID==groupID && $permission==pString );
+			var count = Permission.manager.count( $groupID==groupID.toInt() && $permission==pString );
 			if ( count>1 ) {
 				// We have some duplicates... delete them all and recreate just one.
-				Permission.manager.delete( $groupID==groupID && $permission==pString );
+				Permission.manager.delete( $groupID==groupID.toInt() && $permission==pString );
 				count = 0;
 			}
 			if ( count==0 ) {
@@ -227,20 +228,20 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function revokePermissionFromUser( permission:EnumValue, userID:Int ):Outcome<Noise,Error> {
+	public function revokePermissionFromUser( permission:EnumValue, userID:DatabaseID<User> ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
 			var pString = Permission.getPermissionID( permission );
-			Permission.manager.delete( $userID==userID && $permission==pString );
+			Permission.manager.delete( $userID==userID.toInt() && $permission==pString );
 			return Noise;
 		});
 	}
 
-	public function revokePermissionFromGroup( permission:EnumValue, groupID:Int ):Outcome<Noise,Error> {
+	public function revokePermissionFromGroup( permission:EnumValue, groupID:DatabaseID<Group> ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
 			var pString = Permission.getPermissionID( permission );
-			Permission.manager.delete( $groupID==groupID && $permission==pString );
+			Permission.manager.delete( $groupID==groupID.toInt() && $permission==pString );
 			return Noise;
 		});
 	}
@@ -255,7 +256,7 @@ class EasyAuthApi extends UFApi {
 		}
 	}
 
-	public function changeUsername( userID:Int, newUsername:String ):Outcome<Noise,Error> {
+	public function changeUsername( userID:DatabaseID<User>, newUsername:String ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			var u = User.manager.get( userID );
 			userAllowedToEditUsers( u );
@@ -265,7 +266,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function changeCurrentUserPassword( userID:Int, oldPassword:String, newPassword:String ):Outcome<Noise,Error> {
+	public function changeCurrentUserPassword( userID:DatabaseID<User>, oldPassword:String, newPassword:String ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPChangePasswordOwnUser );
 			var u = easyAuth.currentUser;
@@ -278,7 +279,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function changeAnyPassword( userID:Int, newPassword:String ):Outcome<Noise,Error> {
+	public function changeAnyPassword( userID:DatabaseID<User>, newPassword:String ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPChangePasswordAnyUser );
 			var u = User.manager.get( userID );
@@ -298,7 +299,7 @@ class EasyAuthApi extends UFApi {
 		}
 	}
 
-	public function changeGroupName( groupID:Int, newName:String ):Outcome<Noise,Error> {
+	public function changeGroupName( groupID:DatabaseID<Group> , newName:String ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			var g = Group.manager.get( groupID );
 			userAllowedToEditGroups( g );
