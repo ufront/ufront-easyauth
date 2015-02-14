@@ -5,8 +5,8 @@
   "tags": ["ufront","web","auth","neko","php","auth"],
   "description": "A basic database based user-group-permission authentication system for ufront.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "Add `EasyAuthApi.authenticate(u,p):Bool`. Don't allow EasyAuthAdminModule on client. Stop using `thx` dependency, use `thx.core` instead (via ufront-mvc).",
-  "version": "1.0.0-rc.9",
+  "releasenote": "Change EasyAuthApi to use `DatabaseID<T>` instead of Int, for extra type safety.",
+  "version": "1.0.0-rc.10",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
     "PBKDF2": "",
