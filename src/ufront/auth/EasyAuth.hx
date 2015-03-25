@@ -30,10 +30,10 @@ import thx.core.error.NullArgument;
 
 		/** The current user, if logged in. Will be null if they are not logged in. **/
 		public var currentUser(get,null):Null<User>;
-		
+
 		/**
 			Does the current user have super-user status?
-			
+
 			This means they either have the EAPCanDoAnything permission, or nobody has that permission.
 			What this means is, until you set a superuser, everyone will count as a superuser.
 			This is potentially dangerous, but is required during the setup of your app.
@@ -78,7 +78,7 @@ import thx.core.error.NullArgument;
 
 		public function hasPermissions( permissions:Iterable<EnumValue> ) {
 			if ( isSuperUser ) return true;
-			
+
 			for ( p in permissions ) {
 				if ( !hasPermission(p) ) return false;
 			}
@@ -168,6 +168,8 @@ import thx.core.error.NullArgument;
 			return 'EasyAuth' + (currentUser!=null ? '[${currentUser.userID}]' : "");
 		}
 
+		public function asAuthHandler() return cast this;
+
 		function get_isSuperUser() {
 			if ( isSuperUser==null ) {
 				isSuperUser = currentUser!=null && currentUser.can(EAPCanDoAnything);
@@ -192,7 +194,7 @@ import thx.core.error.NullArgument;
 			return isSuperUser;
 		}
 	}
-	
+
 	/**
 		A version of EasyAuth that acts in admin mode, useful for task runners etc.
 
@@ -203,7 +205,7 @@ import thx.core.error.NullArgument;
 			super();
 			this.isSuperUser = true;
 		}
-		
+
 		override function get_currentUser() {
 			return null;
 		}
