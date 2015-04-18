@@ -111,7 +111,7 @@ import thx.core.error.NullArgument;
 		var _currentUser:User;
 		function get_currentUser() {
 			if ( _currentUser==null ) {
-				if ( context.session.exists(sessionVariableName) ) {
+				if ( context.session.isActive() && context.session.exists(sessionVariableName) ) {
 					var userID:Null<Int> = context.session.get( sessionVariableName );
 					if ( userID!=null ) {
 						_currentUser = User.manager.get( userID );
