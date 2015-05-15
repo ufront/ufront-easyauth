@@ -7,7 +7,6 @@ import ufront.auth.AuthError;
 import ufront.auth.EasyAuthPermissions;
 import ufront.web.context.HttpContext;
 using tink.CoreApi;
-import thx.core.error.NullArgument;
 
 /**
 
@@ -50,7 +49,7 @@ import thx.core.error.NullArgument;
 		@post public function postInjection() {
 			// Manually check for this injection, because if it's not provided we have a default - we don't want minject to throw an error.
 			sessionVariableName =
-				if ( context.injector.hasMapping(String,"easyAuthSessionVariableName") )
+				if ( context.injector.hasRule(String,"easyAuthSessionVariableName") )
 					context.injector.getInstance( String, "easyAuthSessionVariableName" )
 				else defaultSessionVariableName;
 		}
@@ -111,7 +110,7 @@ import thx.core.error.NullArgument;
 		var _currentUser:User;
 		function get_currentUser() {
 			if ( _currentUser==null ) {
-				if ( context.session.isActive() && context.session.exists(sessionVariableName) ) {
+				if ( context.session!=null && context.session.isActive() && context.session.exists(sessionVariableName) ) {
 					var userID:Null<Int> = context.session.get( sessionVariableName );
 					if ( userID!=null ) {
 						_currentUser = User.manager.get( userID );
