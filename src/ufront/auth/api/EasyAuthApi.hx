@@ -38,11 +38,11 @@ class EasyAuthApi extends UFApi {
 	public function logout():Void {
 		easyAuth.endSession();
 	}
-	
+
 	/**
 		Authentification without storing sessions. Useful for development, testing or occasional client request.
 		In production sending credentials to the server multiple times should be avoided, use login/sessions instead.
-	
+
 		@param username The username of the user we wish to authentificate.
 		@param password The user entered password.
 		@return `true` if username and password are valid, false otherwise.
@@ -55,14 +55,14 @@ class EasyAuthApi extends UFApi {
 		}
 		return false;
 	}
-	
+
 	public function getUser( userID:DatabaseID<User> ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
 			return User.manager.get( userID );
 		});
 	}
-	
+
 	public function getUserByUsername( username:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
@@ -76,14 +76,14 @@ class EasyAuthApi extends UFApi {
 			return User.manager.all();
 		});
 	}
-	
+
 	public function getGroup( groupID:DatabaseID<Group> ):Outcome<Group,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllGroups );
 			return Group.manager.get( groupID );
 		});
 	}
-	
+
 	public function getGroupByName( name:String ):Outcome<Group,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllGroups );
@@ -249,7 +249,7 @@ class EasyAuthApi extends UFApi {
 	private function userAllowedToEditUsers( user:User ) {
 		if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
-				if ( easyAuth.currentUser.id==user.id )
+				if ( easyAuth.currentUser.id!=user.id )
 					throw 'You are only allowed to edit your own user.';
 			}
 			else throw 'You are not allowed to edit users, even your own.';
@@ -308,9 +308,9 @@ class EasyAuthApi extends UFApi {
 			return Noise;
 		});
 	}
-	
+
 	private function wrapInOutcome<T>( fn:Void->T, ?pos:haxe.PosInfos ):Outcome<T,Error> {
-		return 
+		return
 			try Success( fn() )
 			catch (e:Dynamic) Failure( Error.withData('Internal Server Error', e, pos) );
 	}
