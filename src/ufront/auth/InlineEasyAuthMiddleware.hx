@@ -8,20 +8,19 @@ import ufront.web.HttpError;
 import tink.core.Error;
 
 /**
-	Allow for inline authentication on any HttpRequest.
+Allow for inline authentication on any HttpRequest.
 
-	It will:
+It will:
 
-	 - Check if you are already logged in
-	 - If not, check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.
-	 - `request.authorization` values will have precedence over values from `request.params`.
-	 - Currently only works with EasyAuth as the AuthHandler, and EasyAuthDBAdapter as the AuthAdapter.  This may be more flexible in future
+ - Check if you are already logged in
+ - If not, check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.
+ - `request.authorization` values will have precedence over values from `request.params`.
+ - Currently only works with EasyAuth as the AuthHandler, and EasyAuthDBAdapter as the AuthAdapter.  This may be more flexible in future
 
-	@author Jason O'Neil
+@author Jason O'Neil
 **/
 #if server
-class InlineEasyAuthModule implements UFRequestMiddleware
-{
+class InlineEasyAuthMiddleware implements UFRequestMiddleware {
 	public function new() {}
 
 	public function requestIn( ctx:HttpContext ):Surprise<Noise,Error> {
@@ -49,7 +48,7 @@ class InlineEasyAuthModule implements UFRequestMiddleware
 			if ( !isLoggedIn ) {
 				var attemptedLogin = false;
 				if ( Std.is(a,EasyAuth) ) {
-					var ea = cast a;
+					var ea:EasyAuth = cast a;
 					var httpAuth = ctx.request.authorization;
 					var params = ctx.request.params;
 
