@@ -15,7 +15,9 @@ using Lambda;
 **/
 class EasyAuthApi extends UFApi {
 
-	@inject public var easyAuth:EasyAuth;
+	#if server
+		@inject public var easyAuth:EasyAuth;
+	#end
 
 	/**
 		Attempt to login given a username and password.
