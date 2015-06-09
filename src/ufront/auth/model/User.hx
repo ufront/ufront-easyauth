@@ -23,7 +23,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 
 	public function new( username:String, ?password:String ) {
 		super();
-		#if server 
+		#if server
 			this.username = username;
 			if ( password!=null ) {
 				this.setPassword( password );
@@ -33,7 +33,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 				this.password = "";
 			}
 			this.forcePasswordChange = false;
-		#end 
+		#end
 	}
 
 	/** Generate a new salt and password.  You will need to call save() yourself */
@@ -41,7 +41,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 	{
 		#if server
 			if ( password!=null ) {
-				this.salt = Random.string(32);
+				this.salt = generateSalt();
 				this.password = generatePasswordHash(password, salt);
 			}
 			else {
@@ -65,7 +65,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 		return username;
 	}
 
-	function checkPermission( p:EnumValue ) 
+	function checkPermission( p:EnumValue )
 	{
 		return allUserPermissions.has( Permission.getPermissionID(p) );
 	}
@@ -97,12 +97,21 @@ class User extends Object implements ufront.auth.UFAuthUser
 		return username;
 	}
 
-	#if server 
+	#if server
 		public function removeSensitiveData()
 		{
 			this.salt = "";
 			this.password = "";
 			return this;
+		}
+
+		public static function generateSalt()
+		{
+			var buff = new StringBuf();
+			for (i in 0...32) {
+				buff.addChar( Math.floor(Math.random()*74)+48 );
+			}
+			return buff.toString();
 		}
 
 		public static function generatePasswordHash(password:String, salt:String)
