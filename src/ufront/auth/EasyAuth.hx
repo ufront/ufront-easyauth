@@ -12,8 +12,7 @@ using tink.CoreApi;
 
 **/
 #if server
-	class EasyAuth implements UFAuthHandler<User>
-	{
+	class EasyAuth implements UFAuthHandler {
 		/** The default variable name to save the User ID to in the current session. Default is `easyauth_session_storage`. **/
 		public static var defaultSessionVariableName = "easyauth_session_storage";
 
@@ -28,7 +27,8 @@ using tink.CoreApi;
 		@inject public var context(default,null):HttpContext;
 
 		/** The current user, if logged in. Will be null if they are not logged in. **/
-		public var currentUser(get,null):Null<User>;
+		public var currentUser(get,null):Null<UFAuthUser>;
+		var _currentUser:User;
 
 		/**
 			Does the current user have super-user status?
@@ -64,7 +64,7 @@ using tink.CoreApi;
 
 		public function isLoggedInAs( user:UFAuthUser ) {
 			var u = Std.instance( user, User );
-			return isSuperUser || ( u!=null && currentUser!=null && u.id==currentUser.id );
+			return isSuperUser || ( u!=null && currentUser!=null && u.userID==currentUser.userID );
 		}
 
 		public function requireLoginAs( user:UFAuthUser ) {
@@ -106,9 +106,12 @@ using tink.CoreApi;
 			else throw 'Could not set the current user to $user, because that user is not a ufront.auth.model.User';
 		}
 
+		/**
+		Get the current user, typed as a `UFAuthUser`.
 
-		var _currentUser:User;
-		function get_currentUser() {
+		This is identical to the `currentUser` property's getter, except that it returns the current user typed as a `User` not just a `UFAuthUser`.
+		**/
+		public function getCurrentUser():User {
 			if ( _currentUser==null ) {
 				if ( context.session!=null && context.session.isActive() && context.session.exists(sessionVariableName) ) {
 					var userID:Null<Int> = context.session.get( sessionVariableName );
@@ -119,6 +122,8 @@ using tink.CoreApi;
 			}
 			return _currentUser;
 		}
+
+		function get_currentUser() return getCurrentUser();
 
 		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,AuthError> {
 			endSession();
@@ -166,8 +171,6 @@ using tink.CoreApi;
 		public function toString() {
 			return 'EasyAuth' + (currentUser!=null ? '[${currentUser.userID}]' : "");
 		}
-
-		public function asAuthHandler() return cast this;
 
 		function get_isSuperUser() {
 			if ( isSuperUser==null ) {

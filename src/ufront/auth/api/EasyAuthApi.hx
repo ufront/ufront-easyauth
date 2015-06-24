@@ -151,7 +151,7 @@ class EasyAuthApi extends UFApi {
 	private function userAllowedToAssignToGroup( group:Group ) {
 		if ( !easyAuth.hasPermission( EAPAssignAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPAssignOwnGroup) ) {
-				if ( easyAuth.currentUser.groups.has(group)==false )
+				if ( easyAuth.getCurrentUser().groups.has(group)==false )
 					throw 'You are not in the group you are trying to assign users to.';
 			}
 			else throw 'You do not have permission to assign users to groups';
@@ -181,7 +181,7 @@ class EasyAuthApi extends UFApi {
 	private function userAllowedToAssignPermissions( permission:EnumValue ) {
 		if ( !easyAuth.hasPermission( EAPAssignAnyUserPermission ) ) {
 			if ( easyAuth.hasPermission(EAPAssignUserPermissionYouHave) ) {
-				if ( easyAuth.currentUser.can(permission)==false )
+				if ( easyAuth.getCurrentUser().can(permission)==false )
 					throw 'You do not have the $permission permission, so you cannot give it to anyone.';
 			}
 			else throw 'You do not have permission to assign permissions.';
@@ -251,7 +251,7 @@ class EasyAuthApi extends UFApi {
 	private function userAllowedToEditUsers( user:User ) {
 		if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
-				if ( easyAuth.currentUser.id!=user.id )
+				if ( easyAuth.getCurrentUser().id!=user.id )
 					throw 'You are only allowed to edit your own user.';
 			}
 			else throw 'You are not allowed to edit users, even your own.';
@@ -271,7 +271,7 @@ class EasyAuthApi extends UFApi {
 	public function changeCurrentUserPassword( userID:DatabaseID<User>, oldPassword:String, newPassword:String ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPChangePasswordOwnUser );
-			var u = easyAuth.currentUser;
+			var u = easyAuth.getCurrentUser();
 			// Don't let them change the password if they don't have the old password...
 			var authAdapter = new EasyAuthDBAdapter( u.username, oldPassword );
 			authAdapter.authenticateSync().sure();
@@ -294,7 +294,7 @@ class EasyAuthApi extends UFApi {
 	private function userAllowedToEditGroups( group:Group ) {
 		if ( !easyAuth.hasPermission( EAPEditAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnGroup) ) {
-				if ( easyAuth.currentUser.groups.has(group)==false )
+				if ( easyAuth.getCurrentUser().groups.has(group)==false )
 					throw 'You are only allowed to edit groups you are in.';
 			}
 			else throw 'You are not allowed to edit groups, even one you are in.';
