@@ -49,7 +49,7 @@ using tink.CoreApi;
 		@post public function postInjection() {
 			// Manually check for this injection, because if it's not provided we have a default - we don't want minject to throw an error.
 			sessionVariableName =
-				if ( context.injector.hasRule(String,"easyAuthSessionVariableName") )
+				if ( context.injector.hasMapping(String,"easyAuthSessionVariableName") )
 					context.injector.getInstance( String, "easyAuthSessionVariableName" )
 				else defaultSessionVariableName;
 		}
