@@ -7,6 +7,7 @@ import ufront.auth.EasyAuthDBAdapter;
 import ufront.auth.EasyAuth;
 import ufront.auth.EasyAuthPermissions;
 import ufront.db.DatabaseID;
+import minject.Injector;
 using tink.CoreApi;
 using Lambda;
 
@@ -17,17 +18,29 @@ class EasyAuthApi extends UFApi {
 
 	#if server
 		@inject public var easyAuth:EasyAuth;
+		@inject public var injector:Injector;
 	#end
 
 	/**
 		Attempt to login given a username and password.
+
+		By default this will use `EasyAuthDBAdapter` to attempt to match the username and password to a valid user.
+		If you wish to use a different auth adapter to check a username and password in a different way, you can inject a different `ufront.auth.UFAuthAdapter<ufront.auth.model.User>` class.
+		The custom `UFAuthAdapter` will be instantiated by dependency injection, and have both "username" and "password" mapped as Strings.
+		See `EasyAuthDBAdapter` for an example implementation.
 
 		@param username The username of the user we wish to log in as.
 		@param password The user entered password - this will be hashed with the same salt and compared to the hash in the database.
 		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
 	**/
 	public function attemptLogin( username:String, password:String ):Outcome<User,AuthError> {
-		return easyAuth.startSessionSync( new EasyAuthDBAdapter(username,password) );
+		injector.map( String, "username" ).toValue( username );
+		injector.map( String, "password" ).toValue( password );
+		if ( injector.hasMapping("ufront.auth.UFAuthAdapter<ufront.auth.model.User>")==false ) {
+			injector.map( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" ).toClass( EasyAuthDBAdapter );
+		}
+		var authAdapter = injector.getValue( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" );
+		return easyAuth.startSessionSync( authAdapter );
 	}
 
 	/**

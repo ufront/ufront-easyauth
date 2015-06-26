@@ -6,29 +6,34 @@ import ufront.auth.UFAuthAdapter;
 import ufront.auth.AuthError;
 using tink.CoreApi;
 
-class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterSync<User>
-{
-	var suppliedUsername:String;
-	var suppliedPassword:String;
+class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterSync<User> {
 
+	var username:String;
+	var password:String;
+
+	/**
+	@param username The username to use when attempting authentication. Can be injected as a String named "username".
+	@param password The password to use when attempting authentication. Can be injected as a String named "password".
+	**/
+	@inject("username","password")
 	public function new(username:String, password:String) {
-		suppliedUsername = username;
-		suppliedPassword = password;
+		this.username = username;
+		this.password = password;
 	}
 
 	public function authenticateSync():Outcome<User,AuthError> {
 		#if server
-			if ( suppliedUsername==null ) return Failure( LoginFailed('No username was supplied') );
-			if ( suppliedPassword==null ) return Failure( LoginFailed('No password was supplied') );
+			if ( username==null ) return Failure( LoginFailed(NoUsername) );
+			if ( password==null ) return Failure( LoginFailed(NoPassword) );
 
-			var u = User.manager.select( $username==suppliedUsername );
+			var u = User.manager.select( $username==username );
 			if ( u!=null && u.password.length==0 && u.salt.length==0 )
-				return Failure( LoginFailed('This user has not finished setting up their password.') );
-			if ( u!=null && u.password==User.generatePasswordHash(suppliedPassword,u.salt) )
+				return Failure( LoginFailed(NotSetUp) );
+			if ( u!=null && u.password==User.generatePasswordHash(password,u.salt) )
 				return Success( u );
 			else
-				return Failure( LoginFailed('Username or password was incorrect.') );
-		#else 
+				return Failure( LoginFailed(IncorrectDetails) );
+		#else
 			return Failure( LoginFailed("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuthApi.attemptLogin()`") );
 		#end
 	}
@@ -36,4 +41,12 @@ class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterS
 	public function authenticate():Surprise<User,AuthError> {
 		return Future.sync( authenticateSync() );
 	}
+}
+
+@:enum abstract EasyAuthLoginErrorMessage(String) to String {
+	var NoUsername = 'No username was supplied';
+	var NoPassword = 'No password was supplied';
+	var NotSetUp = 'This user has not finished setting up their password.';
+	var IncorrectDetails = 'IncorrectDetails';
+	
 }
