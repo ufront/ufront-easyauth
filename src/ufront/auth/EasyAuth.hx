@@ -102,6 +102,7 @@ using tink.CoreApi;
 			if ( u!=null ) {
 				_currentUser = u;
 				context.session.set(sessionVariableName, (u!=null) ? u.id : null);
+				context.session.regenerateID();
 			}
 			else throw 'Could not set the current user to $user, because that user is not a ufront.auth.model.User';
 		}
@@ -133,6 +134,7 @@ using tink.CoreApi;
 				switch ( r ) {
 					case Success(user):
 						context.session.set( sessionVariableName, user.id );
+						context.session.regenerateID();
 					case Failure(_):
 				}
 			});
@@ -147,6 +149,7 @@ using tink.CoreApi;
 			switch result {
 				case Success(user):
 					context.session.set( sessionVariableName, user.id );
+					context.session.regenerateID();
 				case Failure(_):
 			}
 
