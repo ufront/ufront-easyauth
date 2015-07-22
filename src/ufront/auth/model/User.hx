@@ -1,11 +1,9 @@
 package ufront.auth.model;
 
-#if (client && ufront_clientds)
-	import promhx.Promise;
-#end
 import ufront.db.Object;
 import ufront.db.ManyToMany;
 import sys.db.Types;
+import ufront.auth.EasyAuthPermissions;
 using Lambda;
 
 @:table("auth_user")
@@ -25,13 +23,7 @@ class User extends Object implements ufront.auth.UFAuthUser
 		super();
 		#if server
 			this.username = username;
-			if ( password!=null ) {
-				this.setPassword( password );
-			}
-			else {
-				this.salt = "";
-				this.password = "";
-			}
+			setPassword(password);
 			this.forcePasswordChange = false;
 		#end
 	}
@@ -56,16 +48,26 @@ class User extends Object implements ufront.auth.UFAuthUser
 	{
 		loadUserPermissions();
 		if (allUserPermissions==null) return false; // Permissions not loaded yet...
+		if (isSuperUser()) return true;
 		if (permission!=null) if ( !checkPermission(permission) ) return false;
 		if (permissions!=null) for ( p in permissions ) if ( !checkPermission(p) ) return false;
 		return true;
+	}
+
+	@:skip var _isSuperUser:Null<Bool>;
+
+	inline function isSuperUser()
+	{
+		if (_isSuperUser==null)
+			_isSuperUser = checkPermission( EAPCanDoAnything );
+		return _isSuperUser;
 	}
 
 	function get_userID() {
 		return username;
 	}
 
-	function checkPermission( p:EnumValue )
+	inline function checkPermission( p:EnumValue )
 	{
 		return allUserPermissions.has( Permission.getPermissionID(p) );
 	}
