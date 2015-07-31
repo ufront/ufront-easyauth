@@ -8,6 +8,8 @@ import ufront.auth.EasyAuth;
 import ufront.auth.EasyAuthPermissions;
 import ufront.db.DatabaseID;
 import minject.Injector;
+import tink.core.Error;
+import ufront.web.HttpError;
 using tink.CoreApi;
 using Lambda;
 
@@ -33,7 +35,7 @@ class EasyAuthApi extends UFApi {
 		@param password The user entered password - this will be hashed with the same salt and compared to the hash in the database.
 		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
 	**/
-	public function attemptLogin( username:String, password:String ):Outcome<User,AuthError> {
+	public function attemptLogin( username:String, password:String ):Outcome<User,TypedError<AuthError>> {
 		injector.map( String, "username" ).toValue( username );
 		injector.map( String, "password" ).toValue( password );
 		if ( injector.hasMapping("ufront.auth.UFAuthAdapter<ufront.auth.model.User>")==false ) {
@@ -165,9 +167,9 @@ class EasyAuthApi extends UFApi {
 		if ( !easyAuth.hasPermission( EAPAssignAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPAssignOwnGroup) ) {
 				if ( easyAuth.getCurrentUser().groups.has(group)==false )
-					throw 'You are not in the group you are trying to assign users to.';
+					throw HttpError.unauthorized( 'You are not in the group you are trying to assign users to' );
 			}
-			else throw 'You do not have permission to assign users to groups';
+			else throw HttpError.unauthorized( 'You do not have permission to assign users to groups' );
 		}
 	}
 
@@ -195,9 +197,9 @@ class EasyAuthApi extends UFApi {
 		if ( !easyAuth.hasPermission( EAPAssignAnyUserPermission ) ) {
 			if ( easyAuth.hasPermission(EAPAssignUserPermissionYouHave) ) {
 				if ( easyAuth.getCurrentUser().can(permission)==false )
-					throw 'You do not have the $permission permission, so you cannot give it to anyone.';
+					throw HttpError.unauthorized( 'You do not have the $permission permission, so you cannot give it to anyone' );
 			}
-			else throw 'You do not have permission to assign permissions.';
+			else throw HttpError.unauthorized( 'You do not have permission to assign permissions' );
 		}
 	}
 
@@ -265,9 +267,9 @@ class EasyAuthApi extends UFApi {
 		if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
 				if ( easyAuth.getCurrentUser().id!=user.id )
-					throw 'You are only allowed to edit your own user.';
+					throw HttpError.unauthorized( 'You are only allowed to edit your own user' );
 			}
-			else throw 'You are not allowed to edit users, even your own.';
+			else throw HttpError.unauthorized( 'You are not allowed to edit users, even your own' );
 		}
 	}
 
@@ -308,9 +310,9 @@ class EasyAuthApi extends UFApi {
 		if ( !easyAuth.hasPermission( EAPEditAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnGroup) ) {
 				if ( easyAuth.getCurrentUser().groups.has(group)==false )
-					throw 'You are only allowed to edit groups you are in.';
+					throw HttpError.unauthorized( 'You are only allowed to edit groups you are in' );
 			}
-			else throw 'You are not allowed to edit groups, even one you are in.';
+			else throw HttpError.unauthorized( 'You are not allowed to edit groups, even one you are in' );
 		}
 	}
 
@@ -327,6 +329,6 @@ class EasyAuthApi extends UFApi {
 	private function wrapInOutcome<T>( fn:Void->T, ?pos:haxe.PosInfos ):Outcome<T,Error> {
 		return
 			try Success( fn() )
-			catch (e:Dynamic) Failure( Error.withData('Internal Server Error', e, pos) );
+			catch (e:Dynamic) Failure( HttpError.internalServerError(null, e, pos) );
 	}
 }

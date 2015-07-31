@@ -71,7 +71,7 @@ class InlineEasyAuthMiddleware implements UFRequestMiddleware {
 								// for their request, they attempted to log in with incorrect credentials,
 								// therefore give an error.
 								ctx.ufError( 'Failed to log in as $username: $e' );
-								t.trigger( Failure(HttpError.unauthorized()) );
+								t.trigger( Failure(e) );
 						});
 						attemptedLogin = true;
 					}

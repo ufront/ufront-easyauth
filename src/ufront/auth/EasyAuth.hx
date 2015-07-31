@@ -6,6 +6,8 @@ import ufront.auth.UFAuthAdapter;
 import ufront.auth.AuthError;
 import ufront.auth.EasyAuthPermissions;
 import ufront.web.context.HttpContext;
+import ufront.web.HttpError;
+import tink.core.Error;
 using tink.CoreApi;
 
 /**
@@ -59,7 +61,7 @@ using tink.CoreApi;
 		}
 
 		public function requireLogin() {
-			if ( !isLoggedIn() ) throw NotLoggedIn;
+			if ( !isLoggedIn() ) throw HttpError.authError( ANotLoggedIn );
 		}
 
 		public function isLoggedInAs( user:UFAuthUser ) {
@@ -68,7 +70,7 @@ using tink.CoreApi;
 		}
 
 		public function requireLoginAs( user:UFAuthUser ) {
-			if ( !isLoggedInAs(user) ) throw NotLoggedInAs( user );
+			if ( !isLoggedInAs(user) ) throw HttpError.authError( ANotLoggedInAs(user) );
 		}
 
 		public function hasPermission( permission:EnumValue ) {
@@ -87,7 +89,7 @@ using tink.CoreApi;
 		public function requirePermission( permission:EnumValue ) {
 			if ( !hasPermission(permission) ) {
 				var name = Type.enumConstructor(permission);
-				throw NoPermission( permission );
+				throw HttpError.authError( ANoPermission(permission) );
 			}
 		}
 
@@ -97,14 +99,10 @@ using tink.CoreApi;
 			}
 		}
 
-		public function setCurrentUser( user:UFAuthUser ) {
-			var u = Std.instance( user, User );
-			if ( u!=null ) {
-				_currentUser = u;
-				context.session.set(sessionVariableName, (u!=null) ? u.id : null);
-				context.session.regenerateID();
-			}
-			else throw 'Could not set the current user to $user, because that user is not a ufront.auth.model.User';
+		public function setCurrentUser( user:User ) {
+			_currentUser = user;
+			context.session.set(sessionVariableName, (user!=null) ? user.id : null);
+			context.session.regenerateID();
 		}
 
 		/**
@@ -126,7 +124,7 @@ using tink.CoreApi;
 
 		function get_currentUser() return getCurrentUser();
 
-		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,AuthError> {
+		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,TypedError<AuthError>> {
 			endSession();
 
 			var resultFuture = authAdapter.authenticate();
@@ -142,7 +140,7 @@ using tink.CoreApi;
 			return resultFuture;
 		}
 
-		public function startSessionSync( authAdapter:UFAuthAdapterSync<User> ):Outcome<User,AuthError> {
+		public function startSessionSync( authAdapter:UFAuthAdapterSync<User> ):Outcome<User,TypedError<AuthError>> {
 			endSession();
 
 			var result = authAdapter.authenticateSync();
@@ -187,7 +185,7 @@ using tink.CoreApi;
 							try Permission.manager.count( $permission==Permission.getPermissionID(EAPCanDoAnything) )
 							catch ( e:Dynamic ) {
 								if ( sys.db.TableCreate.exists(Permission.manager)==false ) 0;
-								else throw e;
+								else throw HttpError.internalServerError('Unable to check if current user is a superuser',e);
 							}
 						if ( numSuperUsers==0 ) {
 							isSuperUser = true;

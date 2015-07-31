@@ -4,6 +4,8 @@ import ufront.auth.*;
 import ufront.auth.model.User;
 import ufront.auth.UFAuthAdapter;
 import ufront.auth.AuthError;
+import ufront.web.HttpError;
+import tink.core.Error;
 using tink.CoreApi;
 
 class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterSync<User> {
@@ -21,24 +23,24 @@ class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterS
 		this.password = password;
 	}
 
-	public function authenticateSync():Outcome<User,AuthError> {
+	public function authenticateSync():Outcome<User,TypedError<AuthError>> {
 		#if server
-			if ( username==null ) return Failure( LoginFailed(NoUsername) );
-			if ( password==null ) return Failure( LoginFailed(NoPassword) );
+			if ( username==null ) return Failure( HttpError.authError(ALoginFailed(NoUsername)) );
+			if ( password==null ) return Failure( HttpError.authError(ALoginFailed(NoPassword)) );
 
 			var u = User.manager.select( $username==username );
 			if ( u!=null && u.password.length==0 && u.salt.length==0 )
-				return Failure( LoginFailed(NotSetUp) );
+				return Failure( HttpError.authError(ALoginFailed(NotSetUp)) );
 			if ( u!=null && u.password==User.generatePasswordHash(password,u.salt) )
 				return Success( u );
 			else
-				return Failure( LoginFailed(IncorrectDetails) );
+				return Failure( HttpError.authError(ALoginFailed(IncorrectDetails)) );
 		#else
-			return Failure( LoginFailed("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuthApi.attemptLogin()`") );
+			return Failure( HttpError.authError(ALoginFailed("EasyAuthDBAdapter can only authenticate() on the server, please use `EasyAuthApi.attemptLogin()`")) );
 		#end
 	}
 
-	public function authenticate():Surprise<User,AuthError> {
+	public function authenticate():Surprise<User,TypedError<AuthError>> {
 		return Future.sync( authenticateSync() );
 	}
 }
@@ -48,5 +50,4 @@ class EasyAuthDBAdapter implements UFAuthAdapter<User> implements UFAuthAdapterS
 	var NoPassword = 'No password was supplied';
 	var NotSetUp = 'This user has not finished setting up their password.';
 	var IncorrectDetails = 'IncorrectDetails';
-	
 }
