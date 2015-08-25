@@ -329,6 +329,6 @@ class EasyAuthApi extends UFApi {
 	private function wrapInOutcome<T>( fn:Void->T, ?pos:haxe.PosInfos ):Outcome<T,Error> {
 		return
 			try Success( fn() )
-			catch (e:Dynamic) Failure( HttpError.internalServerError(null, e, pos) );
+			catch (e:Dynamic) Failure( HttpError.wrap(e, 'Internal Server Error in ${pos.className}.${pos.methodName}(): $e', pos) );
 	}
 }
