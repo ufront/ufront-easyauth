@@ -35,15 +35,19 @@ class EasyAuthApi extends UFApi {
 		@param password The user entered password - this will be hashed with the same salt and compared to the hash in the database.
 		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
 	**/
-	public function attemptLogin( username:String, password:String ):Outcome<User,TypedError<AuthError>> {
+	public function attemptLogin( username:String, password:String ):Surprise<User,TypedError<AuthError>> {
+		var authAdapter = getAuthAdapter( username, password );
+		return easyAuth.startSession( authAdapter );
+	}
+
+	function getAuthAdapter( username:String, password:String ) {
 		var childInjector = injector.createChildInjector();
 		childInjector.map( String, "username" ).toValue( username );
 		childInjector.map( String, "password" ).toValue( password );
 		if ( childInjector.hasMapping("ufront.auth.UFAuthAdapter<ufront.auth.model.User>")==false ) {
 			childInjector.map( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" ).toClass( EasyAuthDBAdapter );
 		}
-		var authAdapter = childInjector.getValue( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" );
-		return easyAuth.startSessionSync( authAdapter );
+		return childInjector.getValue( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" );
 	}
 
 	/**
@@ -65,13 +69,12 @@ class EasyAuthApi extends UFApi {
 		@param password The user entered password.
 		@return `true` if username and password are valid, false otherwise.
 	**/
-	public function authenticate( username:String, password:String):Bool {
-		var outcome = new EasyAuthDBAdapter(username, password).authenticateSync();
-		switch (outcome) {
-				case Success(data): return true;
-				case Failure(_): return false;
-		}
-		return false;
+	public function authenticate( username:String, password:String):Future<Bool> {
+		var authAdapter = getAuthAdapter( username, password );
+		return authAdapter.authenticate().map(function(outcome) return switch outcome {
+			case Success(data): return true;
+			case Failure(_): return false;
+		});
 	}
 
 	public function getUser( userID:DatabaseID<User> ):Outcome<User,Error> {
