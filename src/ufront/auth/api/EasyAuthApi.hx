@@ -36,12 +36,13 @@ class EasyAuthApi extends UFApi {
 		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
 	**/
 	public function attemptLogin( username:String, password:String ):Outcome<User,TypedError<AuthError>> {
-		injector.map( String, "username" ).toValue( username );
-		injector.map( String, "password" ).toValue( password );
-		if ( injector.hasMapping("ufront.auth.UFAuthAdapter<ufront.auth.model.User>")==false ) {
-			injector.map( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" ).toClass( EasyAuthDBAdapter );
+		var childInjector = injector.createChildInjector();
+		childInjector.map( String, "username" ).toValue( username );
+		childInjector.map( String, "password" ).toValue( password );
+		if ( childInjector.hasMapping("ufront.auth.UFAuthAdapter<ufront.auth.model.User>")==false ) {
+			childInjector.map( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" ).toClass( EasyAuthDBAdapter );
 		}
-		var authAdapter = injector.getValue( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" );
+		var authAdapter = childInjector.getValue( "ufront.auth.UFAuthAdapter<ufront.auth.model.User>" );
 		return easyAuth.startSessionSync( authAdapter );
 	}
 
