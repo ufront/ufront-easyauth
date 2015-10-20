@@ -109,10 +109,12 @@ using tink.CoreApi;
 		Get the current user, typed as a `UFAuthUser`.
 
 		This is identical to the `currentUser` property's getter, except that it returns the current user typed as a `User` not just a `UFAuthUser`.
+
+		If a session has not been initiated this will return null.
 		**/
 		public function getCurrentUser():User {
 			if ( _currentUser==null ) {
-				if ( context.session!=null && context.session.isActive() && context.session.exists(sessionVariableName) ) {
+				if ( context.session!=null && context.session.isReady() && context.session.exists(sessionVariableName) ) {
 					var userID:Null<Int> = context.session.get( sessionVariableName );
 					if ( userID!=null ) {
 						_currentUser = User.manager.get( userID );
