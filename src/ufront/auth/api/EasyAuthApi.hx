@@ -36,11 +36,18 @@ class EasyAuthApi extends UFApi {
 		@return `Success(user)` if the login was successful, or `Failure(AuthError)` if it failed.
 	**/
 	public function attemptLogin( username:String, password:String ):Surprise<User,TypedError<AuthError>> {
-		var authAdapter = getAuthAdapter( username, password );
-		return easyAuth.startSession( authAdapter );
+		try {
+			var authAdapter = getAuthAdapter( username, password );
+			return easyAuth.startSession( authAdapter );
+		}
+		catch ( e:Dynamic ) {
+			var authError = ALoginFailed('Failed to attempt login: $e');
+			var error = Error.typed(500, 'Login Failed (Server Error)', authError);
+			return error.asBadSurprise()
+		}
 	}
 
-	function getAuthAdapter( username:String, password:String ) {
+	function getAuthAdapter( username:String, password:String ):UFAuthAdapter<User> {
 		var childInjector = injector.createChildInjector();
 		childInjector.map( String, "username" ).toValue( username );
 		childInjector.map( String, "password" ).toValue( password );
@@ -167,7 +174,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	private function userAllowedToAssignToGroup( group:Group ) {
+	private function userAllowedToAssignToGroup( group:Group ):Void {
 		if ( !easyAuth.hasPermission( EAPAssignAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPAssignOwnGroup) ) {
 				if ( easyAuth.getCurrentUser().groups.has(group)==false )
@@ -197,7 +204,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	private function userAllowedToAssignPermissions( permission:EnumValue ) {
+	private function userAllowedToAssignPermissions( permission:EnumValue ):Void {
 		if ( !easyAuth.hasPermission( EAPAssignAnyUserPermission ) ) {
 			if ( easyAuth.hasPermission(EAPAssignUserPermissionYouHave) ) {
 				if ( easyAuth.getCurrentUser().can(permission)==false )
@@ -267,7 +274,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	private function userAllowedToEditUsers( user:User ) {
+	private function userAllowedToEditUsers( user:User ):Void {
 		if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
 				if ( easyAuth.getCurrentUser().id!=user.id )
@@ -287,17 +294,34 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	public function changeCurrentUserPassword( userID:DatabaseID<User>, oldPassword:String, newPassword:String ):Outcome<Noise,Error> {
-		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPChangePasswordOwnUser );
-			var u = easyAuth.getCurrentUser();
-			// Don't let them change the password if they don't have the old password...
-			var authAdapter = new EasyAuthDBAdapter( u.username, oldPassword );
-			authAdapter.authenticateSync().sure();
-			u.setPassword( newPassword );
-			u.save();
-			return Noise;
-		});
+	/**
+	Change the password of the currently logged in user.
+
+	The old password must be provided (and be verified with `this.authenticate()`) for the update to be successful.
+
+	If the target user is the currently logged in user, they must have the `EasyAuthPermissions.EAPEditAnyUser` or `EasyAuthPermissions.EAPEditOwnUser` permissions.
+	If the target user is not the currently logged in user, they must have the `EasyAuthPermissions.EAPEditAnyUser` permission.
+	**/
+	public function changeCurrentUserPassword( oldPassword:String, newPassword:String ):Surprise<Noise,Error> {
+		if ( easyAuth.hasPermission(EAPChangePasswordOwnUser)==false )
+			return Failure( HttpError.authError(ANoPermission(EAPChangePasswordOwnUser)) );
+		var u = easyAuth.getCurrentUser();
+		if ( u==null )
+			return Failure( HttpError.authError(ANotLoggedIn) );
+
+		return this.authenticate( u.username, oldPassword ).map(function(validLogin:Bool) {
+			if ( validLogin ) {
+				return wrapInOutcome(function() {
+					u.setPassword( newPassword );
+					u.save();
+					return Noise;
+				});
+			}
+			else {
+				var error = HttpError.authError( ALoginFailed('Existing password not valid') );
+				return Failure( error );
+			}
+		})
 	}
 
 	public function changeAnyPassword( userID:DatabaseID<User>, newPassword:String ):Outcome<Noise,Error> {
@@ -310,7 +334,7 @@ class EasyAuthApi extends UFApi {
 		});
 	}
 
-	private function userAllowedToEditGroups( group:Group ) {
+	private function userAllowedToEditGroups( group:Group ):Void {
 		if ( !easyAuth.hasPermission( EAPEditAnyGroup ) ) {
 			if ( easyAuth.hasPermission(EAPEditOwnGroup) ) {
 				if ( easyAuth.getCurrentUser().groups.has(group)==false )
