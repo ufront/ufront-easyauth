@@ -184,7 +184,7 @@ using tink.CoreApi;
 						// Basically, until you have setup a superuser, everybody is a superuser.
 						// Otherwise you get stuck not being able to set things up because you don't have permission.
 						var numSuperUsers =
-							try Permission.manager.count( $permission==Permission.getPermissionID(EAPCanDoAnything) )
+							try Permission.manager.count( $permission==Permission.getPermissionString(EAPCanDoAnything) )
 							catch ( e:Dynamic ) {
 								if ( sys.db.TableCreate.exists(Permission.manager)==false ) 0;
 								else throw HttpError.internalServerError('Unable to check if current user is a superuser',e);
