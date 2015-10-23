@@ -3,10 +3,12 @@ package ufront.auth.api;
 import ufront.api.UFApi;
 import ufront.auth.model.*;
 import ufront.auth.*;
+import ufront.auth.AuthError;
 import ufront.auth.EasyAuthPermissions;
 import ufront.db.DatabaseID;
 import minject.Injector;
 import ufront.web.HttpError;
+import tink.core.Error.TypedError;
 using ufront.core.AsyncTools;
 using tink.CoreApi;
 using Lambda;
@@ -43,7 +45,7 @@ class EasyAuthApi extends UFApi {
 		catch ( e:Dynamic ) {
 			var authError = ALoginFailed('Failed to attempt login: $e');
 			var error = Error.typed(500, 'Login Failed (Server Error)', authError);
-			return error.asBadSurprise()
+			return error.asBadSurprise();
 		}
 	}
 
@@ -286,7 +288,7 @@ class EasyAuthApi extends UFApi {
 		var errors = [];
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
-			var pString = Permission.getPermissionID( permission );
+			var pString = Permission.getPermissionString( permission );
 			var count = Permission.manager.count( $userID==userID.toInt() && $permission==pString );
 			if ( count>1 ) {
 				// In case we have some duplicates... delete them all and recreate just one.
@@ -314,7 +316,7 @@ class EasyAuthApi extends UFApi {
 		var errors = [];
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
-			var pString = Permission.getPermissionID( permission );
+			var pString = Permission.getPermissionString( permission );
 			var count = Permission.manager.count( $groupID==groupID.toInt() && $permission==pString );
 			if ( count>1 ) {
 				// We have some duplicates... delete them all and recreate just one.
@@ -340,7 +342,7 @@ class EasyAuthApi extends UFApi {
 	public function revokePermissionFromUser( permission:EnumValue, userID:DatabaseID<User> ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
-			var pString = Permission.getPermissionID( permission );
+			var pString = Permission.getPermissionString( permission );
 			Permission.manager.delete( $userID==userID.toInt() && $permission==pString );
 			return Noise;
 		});
@@ -356,7 +358,7 @@ class EasyAuthApi extends UFApi {
 	public function revokePermissionFromGroup( permission:EnumValue, groupID:DatabaseID<Group> ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
 			userAllowedToAssignPermissions( permission );
-			var pString = Permission.getPermissionID( permission );
+			var pString = Permission.getPermissionString( permission );
 			Permission.manager.delete( $groupID==groupID.toInt() && $permission==pString );
 			return Noise;
 		});
@@ -398,10 +400,10 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function changeCurrentUserPassword( oldPassword:String, newPassword:String ):Surprise<Noise,Error> {
 		if ( easyAuth.hasPermission(EAPChangePasswordOwnUser)==false )
-			return Failure( HttpError.authError(ANoPermission(EAPChangePasswordOwnUser)) );
+			return HttpError.authError( ANoPermission(EAPChangePasswordOwnUser) ).asBadSurprise();
 		var u = easyAuth.getCurrentUser();
 		if ( u==null )
-			return Failure( HttpError.authError(ANotLoggedIn) );
+			return HttpError.authError( ANotLoggedIn ).asBadSurprise();
 
 		return this.authenticate( u.username, oldPassword ).map(function(validLogin:Bool) {
 			if ( validLogin ) {
@@ -415,7 +417,7 @@ class EasyAuthApi extends UFApi {
 				var error = HttpError.authError( ALoginFailed('Existing password not valid') );
 				return Failure( error );
 			}
-		})
+		});
 	}
 
 	/**
