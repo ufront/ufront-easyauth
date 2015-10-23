@@ -5,6 +5,9 @@ import ufront.auth.EasyAuthPermissions;
 using tink.CoreApi;
 
 #if ufront_uftasks
+/**
+A `UFTaskSet` to perform some `EasyAuth` administration from your command line tasks.
+**/
 class EasyAuthTasks extends ufront.tasks.UFTaskSet {
 	@:skip @inject public var easyAuthApi:EasyAuthApi;
 
