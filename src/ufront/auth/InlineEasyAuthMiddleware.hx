@@ -2,20 +2,31 @@ package ufront.auth;
 
 import ufront.web.context.HttpContext;
 import ufront.app.UFMiddleware;
-import ufront.app.HttpApplication;
+import ufront.auth.api.EasyAuthApi;
 import tink.CoreApi;
-import ufront.web.HttpError;
-import tink.core.Error;
+using ufront.core.AsyncTools;
 
 /**
-Allow for inline authentication on any HttpRequest.
+Middleware which allows inline `EasyAuth` authentication during any HTTP request.
 
-It will:
+This can be useful for creating APIs, where a single request will need to include the login credentials as well as perform the action.
 
- - Check if you are already logged in
- - If not, check for `username` and `password` in either `request.authorization` or `request.params` and attempt to authenticate with these.
- - `request.authorization` values will have precedence over values from `request.params`.
- - Currently only works with EasyAuth as the AuthHandler, and EasyAuthDBAdapter as the AuthAdapter.  This may be more flexible in future
+How it works:
+
+- This will check for `username` and `password` in either `HttpRequest.authorization` or `HttpRequest.params` and attempt to authenticate with these.
+- `HttpRequest.authorization` values will have precedence over values from `HttpRequest.params`.
+- It will use `EasyAuthApi.attemptLogin()` to check the credentials.
+
+Outcomes:
+
+- If no login was attempted, or the user was already logged in, the request will continue.
+- If the login is successful, the user will be logged in and the request will continue.
+- If the login was not successful, an error will be thrown and the request will not be continued.
+
+Notes:
+
+- This middleware will not `init()` or `commit()` a session.
+  Use `InlineSessionMiddleware` to ensure sessions are correctly initiated and commited.
 
 @author Jason O'Neil
 **/
@@ -24,66 +35,20 @@ class InlineEasyAuthMiddleware implements UFRequestMiddleware {
 	public function new() {}
 
 	public function requestIn( ctx:HttpContext ):Surprise<Noise,Error> {
-		var t = Future.trigger();
-
-		var s = ctx.session;
-		var a = ctx.auth;
-
-		// Wait for the session to init() - it might not have if they don't have InlineSessionMiddleware enabled
-		ctx.session.init().handle( function(res) {
-
-			// See if there is an already active session
-			var isLoggedIn = false;
-			switch res {
-				case Success(_):
-					if ( a.isLoggedIn() ) {
-						isLoggedIn = true;
-						t.trigger( Success(Noise) );
-					}
-				case Failure(err):
-					// Session failed to start... weird, but we'll continue anyway.  Log the error.
-					ctx.ufError( 'Failed to start session: $err' );
+		var httpAuth = ctx.request.authorization;
+		var params = ctx.request.params;
+		var username = (httpAuth!=null) ? httpAuth.user : params['username'];
+		var password = (httpAuth!=null) ? httpAuth.pass : params['password'];
+		if ( username!=null && password!=null && ctx.auth.isLoggedIn()==false ) {
+			try {
+				var easyAuthApi = ctx.injector.getInstance( EasyAuthApi );
+				return easyAuthApi.attemptLogin( username, password ).changeSuccessToNoise();
 			}
-
-			if ( !isLoggedIn ) {
-				var attemptedLogin = false;
-				if ( Std.is(a,EasyAuth) ) {
-					var ea:EasyAuth = cast a;
-					var httpAuth = ctx.request.authorization;
-					var params = ctx.request.params;
-
-					var username:String = params['username'];
-					var password:String = params['password'];
-
-					if ( httpAuth!=null ) {
-						username = httpAuth.user;
-						password = httpAuth.pass;
-					}
-
-					if ( username!=null && password!=null ) {
-						var surprise = ea.startSession( new EasyAuthDBAdapter(username, password) );
-						surprise.handle( function (outcome) switch(outcome) {
-							case Success(u):
-								ctx.ufTrace( 'Logged in as $username ($u) inline' );
-								t.trigger( Success(Noise) );
-							case Failure(e):
-								// Their login failed.  Even though this is inline and they may not need auth
-								// for their request, they attempted to log in with incorrect credentials,
-								// therefore give an error.
-								ctx.ufError( 'Failed to log in as $username: $e' );
-								t.trigger( Failure(e) );
-						});
-						attemptedLogin = true;
-					}
-
-				}
-				if ( !attemptedLogin )
-					// No login was attempted, just continue with the request
-					t.trigger( Success(Noise) );
+			catch ( e:Dynamic ) {
+				return SurpriseTools.asSurpriseError( e, 'Failed to perform inline authentication' );
 			}
-		});
-
-		return t.asFuture();
+		}
+		else return SurpriseTools.success();
 	}
 }
 #end

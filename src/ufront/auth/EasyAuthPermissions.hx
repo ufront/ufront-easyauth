@@ -1,26 +1,26 @@
 package ufront.auth;
 
 /**
-	Permissions that are used by EasyAuth for setting up new users, groups, and permissions.
+Permissions that are used by `EasyAuth` and `EasyAuthApi` for setting up new users, groups, and permissions.
 
-	Please note these permissions are enforced when using `ufront.auth.api.EasyAuthApi`, but they could be bypassed by using the models / database directly.
+Please note these permissions are enforced when using `EasyAuthApi`, but they could be bypassed by using the models / database directly.
 **/
 enum EasyAuthPermissions {
 	/** List all users. **/
 	EAPListAllUsers;
-	
+
 	/** List all groups. **/
 	EAPListAllGroups;
-	
+
 	/** List all permissions for a given user. **/
 	EAPListUserPermissions;
-	
+
 	/** List all groups for any given user. **/
 	EAPListGroupsForUser;
-	
+
 	/** List all users in any given group. **/
 	EAPListUsersInGroups;
-	
+
 	/** Create a new user. **/
 	EAPCreateUser;
 
@@ -56,7 +56,7 @@ enum EasyAuthPermissions {
 
 	/** Edit any Group. **/
 	EAPEditAnyGroup;
-	
+
 	/** Can do anything - they are a superuser. **/
 	EAPCanDoAnything;
 }
