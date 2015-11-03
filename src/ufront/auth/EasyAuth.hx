@@ -131,6 +131,7 @@ using tink.CoreApi;
 			resultFuture.handle( function(r) {
 				switch ( r ) {
 					case Success(user):
+						_currentUser = user;
 						context.session.set( sessionVariableName, user.id );
 						context.session.regenerateID();
 					case Failure(_):
@@ -140,12 +141,16 @@ using tink.CoreApi;
 			return resultFuture;
 		}
 
+		/**
+		A synchronous version of `startSession`.
+		**/
 		public function startSessionSync( authAdapter:UFAuthAdapterSync<User> ):Outcome<User,TypedError<AuthError>> {
 			endSession();
 
 			var result = authAdapter.authenticateSync();
 			switch result {
 				case Success(user):
+					_currentUser = user;
 					context.session.set( sessionVariableName, user.id );
 					context.session.regenerateID();
 				case Failure(_):
@@ -158,6 +163,7 @@ using tink.CoreApi;
 			if ( context.session.exists(sessionVariableName) ) {
 				context.session.remove( sessionVariableName );
 			}
+			_currentUser = null;
 		}
 
 		/**
