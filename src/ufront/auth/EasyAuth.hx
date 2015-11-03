@@ -11,39 +11,56 @@ import tink.core.Error;
 using tink.CoreApi;
 
 /**
+EasyAuth is a `UFAuthHandler` implementation that uses database tables `User`, `Group` and `Permission` to control logins and authentication checks.
 
+EasyAuth depends on Ufront-ORM for interacting with the database, and so this class is only available on sys targets compiled with `-D server`.
+You can use `EasyAuthApi` to interact with EasyAuth from the client.
 **/
 #if server
 	class EasyAuth implements UFAuthHandler {
-		/** The default variable name to save the User ID to in the current session. Default is `easyauth_session_storage`. **/
+		/**
+		The session variable name to use when saving the User ID to the current session.
+		This will be used if no session name is provided with dependency injection when EasyAuth is instantiated.
+		The default value is `easyauth_session_storage`.
+		**/
 		public static var defaultSessionVariableName = "easyauth_session_storage";
 
 		/**
-			The session variable name for the current auth handler.
-			If the dependency injector has a String with the name "easyAuthSessionVariableName", that value will be used.
-			If not, `defaultSessionVariableName` will be used.
+		The current `UFAuthUser`, if logged in.
+		Will be null if they are not logged in.
+		See `getCurrentUser()` to retrieve the current user typed as a `User` object rather than the `UFAuthUser` interface.
 		**/
-		public var sessionVariableName(default,null):String;
-
-		/** The current HttpContext, should be provided by injection. **/
-		@inject public var context(default,null):HttpContext;
-
-		/** The current user, if logged in. Will be null if they are not logged in. **/
 		public var currentUser(get,null):Null<UFAuthUser>;
 		var _currentUser:User;
 
 		/**
-			Does the current user have super-user status?
+		Does the current user have super-user status?
 
-			This means they either have the EAPCanDoAnything permission, or nobody has that permission.
-			What this means is, until you set a superuser, everyone will count as a superuser.
-			This is potentially dangerous, but is required during the setup of your app.
+		This means they either have the `EasyAuthPermissions.EAPCanDoAnything` permission, or the app is still in setup mode.
+
+		Here setup mode means that nobody has the `EAPCanDoAnything` permission yet, so the app is still being setup.
+		While in setup mode, every user is considered a super user and is allowed to do anything, regardless of permissions.
+		Because of this, you should always set up a super user with the `EAPCanDoAnything` permission before making your app public.
 		**/
 		public var isSuperUser(get,null):Bool = null;
 
 		/**
-			Create a new EasyAuth handler.
-			You should usually create this using an `injector.instantiate(EasyAuth)` call so that dependency injection is handled correctly.
+		The session variable name for the current EasyAuth instance.
+		If the dependency injector has a `String` with the name "easyAuthSessionVariableName", that value will be used.
+		If not, `EasyAuth.defaultSessionVariableName` will be used.
+		**/
+		var sessionVariableName(default,null):String;
+
+		/** The current `HttpContext`, provided by injection. **/
+		var context(default,null):HttpContext;
+
+		/**
+		Create a new EasyAuth handler.
+
+		@param httpContext (injected) The context of the current request.
+		@param sessionVariableName (injected, optional) The session variable name to use.
+		  A String named `easyAuthSessionVariableName` from the injector will be used if available.
+		  Otherwise `EasyAuth.defaultSessionVariableName` will be used.
 		**/
 		@inject(_,"easyAuthSessionVariableName")
 		public function new( httpContext:HttpContext, ?sessionVariableName:String ) {
@@ -96,6 +113,12 @@ using tink.CoreApi;
 			}
 		}
 
+		/**
+		Change the current user who is logged in.
+
+		This required the current user to be logged in and have the `EasyAuthPermissions.EAPCanLogInAsAnotherUser` permission.
+		This can be used to implement "login as another user" admin functionality, so expose it with care.
+		**/
 		public function setCurrentUser( user:User ) {
 			requirePermission( EAPCanLogInAsAnotherUser );
 			_currentUser = user;
@@ -104,13 +127,13 @@ using tink.CoreApi;
 		}
 
 		/**
-		Get the current user, typed as a `UFAuthUser`.
+		Get the current user, typed as a `User`.
 
-		This is identical to the `currentUser` property's getter, except that it returns the current user typed as a `User` not just a `UFAuthUser`.
+		This is identical to the `currentUser` property's getter, except that it returns the current user typed as a `User` rather than the `UFAuthUser` interface.
 
 		If a session has not been initiated this will return null.
 		**/
-		public function getCurrentUser():User {
+		public function getCurrentUser():Null<User> {
 			if ( _currentUser==null ) {
 				if ( context.session!=null && context.session.isReady() && context.session.exists(sessionVariableName) ) {
 					var userID:Null<Int> = context.session.get( sessionVariableName );
@@ -124,6 +147,13 @@ using tink.CoreApi;
 
 		function get_currentUser() return getCurrentUser();
 
+		/**
+		Attempt to login with a given `UFAuthAdapter`.
+
+		If the user was previously logged in as a different user, they will be logged out before attempting a new login.
+
+		See `EasyAuthApi.attemptLogin()` for a simple username/password login mechanism based on `EasyAuthDBAdapter`.
+		**/
 		public function startSession( authAdapter:UFAuthAdapter<User> ):Surprise<User,TypedError<AuthError>> {
 			endSession();
 
@@ -159,6 +189,13 @@ using tink.CoreApi;
 			return result;
 		}
 
+		/**
+		End the current authentication session.
+
+		This will remove the User ID from the current `UFHttpSession`, effectivey logging the user out.
+
+		The `UFHttpSession` (including the cookie and other session variables) will continue, it is not ended by calling this function.
+		**/
 		public function endSession() {
 			if ( context.session.exists(sessionVariableName) ) {
 				context.session.remove( sessionVariableName );
@@ -167,14 +204,20 @@ using tink.CoreApi;
 		}
 
 		/**
-			Fetch the user by their username.
+		Fetch the user by their username.
 
-			(Note well: username, not database row ID.)
+		(Note: username, not database row ID.)
+		@param id The username (Please note: not the user database ID).
+		@return The `User` with a matching username, if they existed.
 		**/
-		public function getUserByID( id:String ) {
-			return User.manager.select( $username==id );
+		public function getUserByID( username:String ):Null<User> {
+			return User.manager.select( $username==username );
 		}
 
+		/**
+		Return a String representing the current auth handler.
+		Will be `EasyAuth` if not logged in, or `EasyAuth[$userID]` if they are logged in.
+		**/
 		public function toString() {
 			return 'EasyAuth' + (currentUser!=null ? '[${currentUser.userID}]' : "");
 		}
@@ -205,9 +248,13 @@ using tink.CoreApi;
 	}
 
 	/**
-		A version of EasyAuth that acts in admin mode, useful for task runners etc.
+	EasyAuthAdminMode is a version of `EasyAuth` that you can use in situations where authentication checks aren't needed.
 
-		Exactly the same, but `isSuperUser` is always true, so permissions checks always pass etc.
+	It basically sets `isSuperUser` to true, so that every permission check always passes.
+
+	This is useful for CLI tools, internal web-apps and other code that does not need authentication checks, but wants to work with existing EasyAuth code.
+
+	Please note `currentUser` will always be null, but `isLoggedIn()`, `requireLogin()`, `requireLoginAs()` etc will always succeed / return true.
 	**/
 	class EasyAuthAdminMode extends EasyAuth {
 		public function new() {
