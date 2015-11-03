@@ -1,4 +1,4 @@
-package ufront.ufadmin.modules;
+package ufront.ufadmin.modules.easyauth;
 
 #if (ufront_ufadmin && server)
 
@@ -30,8 +30,8 @@ class EasyAuthAdminModule extends UFAdminModule {
 
 	function displayUserList( userList:Iterable<User>, title:String ) {
 		var users = Lambda.array( userList );
-		users.sort( function(u1,u2) return Reflect.compare(u1.username,u2.username) );
-		var template = CompileTime.readFile( "/ufront/ufadmin/view/easyauth/list.html" );
+		users.sort( function(u1,u2) return Reflect.compare(u1.username.toLowerCase(),u2.username.toLowerCase()) );
+		var template = CompileTime.readFile( "/ufront/ufadmin/modules/easyauth/view/list.html" );
 		return UFAdminModule.wrapInLayout( title, template, {
 			users:users,
 			title:title,
@@ -45,13 +45,18 @@ class EasyAuthAdminModule extends UFAdminModule {
 			throw HttpError.pageNotFound();
 
 		var permissions = api.getAllPermissionsForUser( user.id ).sure();
-		var template = CompileTime.readFile( "/ufront/ufadmin/view/easyauth/view.html" );
+		var template = CompileTime.readFile( "/ufront/ufadmin/modules/easyauth/view/view.html" );
+
+		var allGroups = ["Group A","Group B"];
+		var allPermissions = ["Permission 1","Permission 2"];
 
 		return UFAdminModule.wrapInLayout( 'Viewing User $username', template, {
 			id: user.id,
 			username: username,
 			groups: user.groups,
+			allGroups: allGroups,
 			permissions: permissions,
+			allPermissions: allPermissions,
 		});
 	}
 
@@ -70,17 +75,17 @@ class EasyAuthAdminModule extends UFAdminModule {
 		return "Add a new user!";
 	}
 
-	@:route("/user/$username/edit/")
-	public function editUserForm( username:String ) {
-		return 'Edit user $username';
-	}
-
-	function showUserForm( ?u:User ) {
-		var template = CompileTime.readFile( "/ufront/ufadmin/view/easyauth/view.html" );
-		return UFAdminModule.wrapInLayout( 'Viewing User ${u.username}', template, {
-			id: u.id,
-			username: u.username,
-		});
-	}
+	// @:route("/user/$username/edit/")
+	// public function editUserForm( username:String ) {
+	// 	return 'Edit user $username';
+	// }
+	//
+	// function showUserForm( ?u:User ) {
+	// 	var template = CompileTime.readFile( "/ufront/ufadmin/modules/easyauth/view/view.html" );
+	// 	return UFAdminModule.wrapInLayout( 'Viewing User ${u.username}', template, {
+	// 		id: u.id,
+	// 		username: u.username,
+	// 	});
+	// }
 }
 #end

@@ -1,0 +1,93 @@
+<div class="container">
+
+	<div class="clearfix">
+		<h2 class="pull-left">
+			::username::
+			<div class="btn-group btn-group-xs" role="toolbar">
+				<a href="::baseUri::loginas/::id::" class="btn btn-default btn-small">Login as ::username::</a>
+			</div>
+		</h2>
+	</div>
+
+	<div class="row">
+		<div class="col-md-4">
+			<div class="well">
+				<h4>Change Username</h4>
+				<form action="::baseUri::change-username/::id::" method="POST" class="form">
+					<div class="form-group">
+						<label for="newusername">Username</label>
+						<input type="text" name="newusername" value="::username::" class="form-control" />
+					</div>
+					<div class="form-group">
+						<input type="submit" value="Change Password" class="btn btn-default" />
+					</div>
+				</form>
+			</div>
+
+			<div class="well">
+				<h4>Change Password</h4>
+				<form action="::baseUri::change-password/::id::" method="POST" class="form">
+					<div class="form-group">
+						<label for="password1">Password</label>
+						<input type="password" name="password1" class="form-control" />
+					</div>
+					<div class="form-group">
+						<label for="password2">Confirm Password</label>
+						<input type="password" name="password2" class="form-control" />
+					</div>
+					<div class="form-group">
+						<input type="submit" value="Change Password" class="btn btn-default" />
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="well">
+				<h4>Groups</h4>
+				::foreach groups::
+					<p><span class="label label-info">::name::</span></p>
+				::end::
+
+				<form action="::baseUri::add-group/::id::" class="form">
+					<div class="form-group">
+						<label for="groups">Groups to add ::username:: to</label>
+						<select name="groups" id="groups" multiple="multiple" class="form-control">
+							::foreach allGroups::
+								<option value="::__current__::">::__current__::</option>
+							::end::
+						</select>
+					</div>
+					<div class="form-group">
+						<input type="submit" value="Add to groups" class="btn btn-default" />
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="well">
+				<h4>Permissions</h4>
+
+				::foreach permissions::
+					<p><span class="label label-info">::__current__::</span></p>
+				::end::
+
+				<form action="::baseUri::add-permission/::id::" class="form">
+					<div class="form-group">
+						<label for="permissions">Permissions to grant</label>
+						<select name="permissions" id="permissions" multiple="multiple" class="form-control">
+							::foreach allPermissions::
+								<option value="::__current__::">::__current__::</option>
+							::end::
+						</select>
+					</div>
+					<div class="form-group">
+						<input type="submit" value="Add Permissions" class="btn btn-default" />
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+
+
+</div>
