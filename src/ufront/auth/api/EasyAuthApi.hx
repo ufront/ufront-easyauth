@@ -91,29 +91,45 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Get a specific `User` object based on a database ID.
+
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
+
+	The `salt` and `password` fields will not be included in the returned result.
+	As a result, it is recommended you do not call `save()` on these objects, or the passwords for this user will be reset.
 	**/
 	public function getUser( userID:DatabaseID<User> ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
-			return User.manager.get( userID );
+			var user = User.manager.get( userID );
+			user.removeSensitiveData();
+			return user;
 		});
 	}
 
 	/**
 	Get a specific `User` object based on the username.
+
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
+
+	The `salt` and `password` fields will not be included in the returned result.
+	As a result, it is recommended you do not call `save()` on these objects, or the passwords for this user will be reset.
 	**/
 	public function getUserByUsername( username:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
-			return User.manager.select( $username==username );
+			var user = User.manager.select( $username==username );
+			user.removeSensitiveData();
+			return user;
 		});
 	}
 
 	/**
 	Get a list of all `User` objects in the database.
+
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
+
+	The `salt` and `password` fields will not be included in the returned result.
+	As a result, it is recommended you do not call `save()` on these objects, or the passwords for those users will be reset.
 	**/
 	public function getAllUsers():Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
@@ -124,6 +140,7 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Get a specific `Group` object based on a database ID.
+
 	This requires the `EasyAuthPermissions.EAPListAllGroups` permission.
 	**/
 	public function getGroup( groupID:DatabaseID<Group> ):Outcome<Group,Error> {
@@ -135,6 +152,7 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Get a specific `Group` object based on the group name.
+
 	This requires the `EasyAuthPermissions.EAPListAllGroups` permission.
 	**/
 	public function getGroupByName( name:String ):Outcome<Group,Error> {
@@ -146,6 +164,7 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Get a list of all `Group` objects in the database.
+
 	This requires the `EasyAuthPermissions.EAPListAllGroups` permission.
 	**/
 	public function getAllGroups():Outcome<List<Group>,Error> {
@@ -157,6 +176,7 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Get a list of all groups for a given user.
+
 	This requires the `EasyAuthPermissions.EAPListGroupsForUser` permission.
 	**/
 	public function getAllGroupsForUser( userID:DatabaseID<User> ):Outcome<List<Group>,Error> {
@@ -169,13 +189,20 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Get a list of all users in a given group.
+
 	This requires the `EasyAuthPermissions.EAPListUsersInGroups` permission.
+
+	The `salt` and `password` fields will not be included in the returned result.
+	As a result, it is recommended you do not call `save()` on these objects, or the passwords for those users will be reset.
 	**/
 	public function getAllUsersInGroup( groupID:DatabaseID<Group> ):Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListUsersInGroups );
 			var group = Group.manager.get( groupID );
-			return group.users.list();
+			var list = group.users.list();
+			for ( u in list )
+				u.removeSensitiveData();
+			return list;
 		});
 	}
 
@@ -202,13 +229,20 @@ class EasyAuthApi extends UFApi {
 
 	/**
 	Create a new `User` in the database using the given username and password.
+
+	A random salt will be generated and used to set the password hash before saving.
+
 	This requires the `EasyAuthPermissions.EAPCreateUser` permission.
+
+	The `salt` and `password` fields will not be included in the returned user object.
+	As a result, it is recommended you do not call `save()` on this object, or the password for that users will be reset.
 	**/
 	public function createUser( username:String, password:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPCreateUser );
 			var u = new User( username, password );
 			u.save();
+			u.removeSensitiveData();
 			return u;
 		});
 	}
