@@ -45,14 +45,11 @@ using tink.CoreApi;
 			Create a new EasyAuth handler.
 			You should usually create this using an `injector.instantiate(EasyAuth)` call so that dependency injection is handled correctly.
 		**/
-		public function new() {}
-
-		/** Read configuration from injector after `context` has been injected. **/
-		@post public function postInjection() {
-			// Manually check for this injection, because if it's not provided we have a default - we don't want minject to throw an error.
-			sessionVariableName =
-				if ( context.injector.hasMapping(String,"easyAuthSessionVariableName") )
-					context.injector.getInstance( String, "easyAuthSessionVariableName" )
+		@inject(_,"easyAuthSessionVariableName")
+		public function new( httpContext:HttpContext, ?sessionVariableName:String ) {
+			this.httpContext = httpContext;
+			this.sessionVariableName =
+				if ( sessionVariableName!=null ) sessionVariableName
 				else defaultSessionVariableName;
 		}
 
