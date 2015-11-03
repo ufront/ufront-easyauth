@@ -57,6 +57,9 @@ enum EasyAuthPermissions {
 	/** Edit any Group. **/
 	EAPEditAnyGroup;
 
+	/** Can log in as another user without knowing their username and password. **/
+	EAPCanLogInAsAnotherUser;
+
 	/** Can do anything - they are a superuser. **/
 	EAPCanDoAnything;
 }

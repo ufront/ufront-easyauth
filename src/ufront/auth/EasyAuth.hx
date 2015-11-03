@@ -100,6 +100,7 @@ using tink.CoreApi;
 		}
 
 		public function setCurrentUser( user:User ) {
+			requirePermission( EAPCanLogInAsAnotherUser );
 			_currentUser = user;
 			context.session.set(sessionVariableName, (user!=null) ? user.id : null);
 			context.session.regenerateID();
