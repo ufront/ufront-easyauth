@@ -62,9 +62,9 @@ You can use `EasyAuthApi` to interact with EasyAuth from the client.
 		  A String named `easyAuthSessionVariableName` from the injector will be used if available.
 		  Otherwise `EasyAuth.defaultSessionVariableName` will be used.
 		**/
-		@inject(_,"easyAuthSessionVariableName")
+		@inject("","easyAuthSessionVariableName")
 		public function new( httpContext:HttpContext, ?sessionVariableName:String ) {
-			this.httpContext = httpContext;
+			this.context = httpContext;
 			this.sessionVariableName =
 				if ( sessionVariableName!=null ) sessionVariableName
 				else defaultSessionVariableName;
@@ -257,8 +257,8 @@ You can use `EasyAuthApi` to interact with EasyAuth from the client.
 	Please note `currentUser` will always be null, but `isLoggedIn()`, `requireLogin()`, `requireLoginAs()` etc will always succeed / return true.
 	**/
 	class EasyAuthAdminMode extends EasyAuth {
-		public function new() {
-			super();
+		@inject public function new( ?httpContext:HttpContext ) {
+			super( httpContext );
 			this.isSuperUser = true;
 		}
 
