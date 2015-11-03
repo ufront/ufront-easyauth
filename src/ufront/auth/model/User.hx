@@ -75,6 +75,7 @@ class User extends Object implements ufront.auth.UFAuthUser {
 	Must not be null, up to 40 characters long, no other validation is performed.
 	**/
 	public var username:SString<40>;
+
 	/**
 	The randomly generated salt used for generating this user's password hash.
 
