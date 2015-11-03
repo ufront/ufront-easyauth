@@ -1,6 +1,6 @@
 package ufront.auth.api;
 
-import ufront.api.UFApi;
+import ufront.api.*;
 import ufront.auth.model.*;
 import ufront.auth.*;
 import ufront.auth.AuthError;
@@ -469,3 +469,9 @@ class EasyAuthApi extends UFApi {
 			catch (e:Dynamic) Failure( HttpError.wrap(e, 'Internal Server Error in ${pos.className}.${pos.methodName}(): $e', pos) );
 	}
 }
+
+/** An Asynchronous proxy of `EasyAuthApi`. **/
+class EasyAuthApiAsync extends UFAsyncApi<EasyAuthApi> {}
+
+/** An Asynchronous Callback proxy of `EasyAuthApi`. **/
+class EasyAuthApiAsyncCallback extends UFCallbackApi<EasyAuthApi> {}
