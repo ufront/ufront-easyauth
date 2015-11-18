@@ -44,7 +44,7 @@ class EasyAuthApi extends UFApi {
 		}
 		catch ( e:Dynamic ) {
 			var authError = ALoginFailed('Failed to attempt login: $e');
-			var error = Error.typed(500, 'Login Failed (Server Error)', authError);
+			var error = Error.typed(500, 'Login Failed (Server Error): $e', authError);
 			return error.asBadSurprise();
 		}
 	}
