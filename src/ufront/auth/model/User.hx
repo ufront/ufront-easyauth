@@ -115,7 +115,7 @@ class User extends Object implements ufront.auth.UFAuthUser {
 
 	// Private variables used to cache permission information.
 	@:skip var hasSuperUserPermission:Null<Bool>;
-	@:skip var allUserPermissions:List<String>;
+	@:skip @:isVar var allUserPermissions(get,null):List<String>;
 
 	/**
 	Create a new user object.
@@ -172,8 +172,6 @@ class User extends Object implements ufront.auth.UFAuthUser {
 	- Otherwise, return **true**.
 	**/
 	public function can( ?permission:EnumValue, ?permissions:Iterable<EnumValue> ):Bool {
-		loadUserPermissions();
-		if (allUserPermissions==null) return false;
 		if (isSuperUser()) return true;
 		if (permission!=null) if ( !checkPermission(permission) ) return false;
 		if (permissions!=null) for ( p in permissions ) if ( !checkPermission(p) ) return false;
@@ -200,7 +198,7 @@ class User extends Object implements ufront.auth.UFAuthUser {
 		return allUserPermissions.has( Permission.getPermissionString(p) );
 	}
 
-	function loadUserPermissions():Void {
+	function get_allUserPermissions():List<String> {
 		if ( allUserPermissions==null ) {
 			#if server
 				var groupIDs = [ for (g in groups) g.id ];
@@ -219,6 +217,7 @@ class User extends Object implements ufront.auth.UFAuthUser {
 				#end
 			#end
 		}
+		return allUserPermissions;
 	}
 
 	/**
