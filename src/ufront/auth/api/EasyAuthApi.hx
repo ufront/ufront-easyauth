@@ -102,8 +102,11 @@ class EasyAuthApi extends UFApi {
 	public function getCurrentUser():Outcome<Null<User>,Error> {
 		return wrapInOutcome(function() {
 			var user = easyAuth.getCurrentUser();
-			if ( user!=null )
+			if ( user!=null ) {
 				user.removeSensitiveData();
+				user.hxSerializationFields.push( "hasSuperUserPermission" );
+				user.hxSerializationFields.push( "allUserPermissions" );
+			}
 			return user;
 		});
 	}
