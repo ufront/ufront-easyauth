@@ -71,7 +71,7 @@ You can use `EasyAuthApi` to interact with EasyAuth from the client.
 		}
 
 		public function isLoggedIn() {
-			return isSuperUser || context.session.exists(sessionVariableName);
+			return isSuperUser || ( context.session.isActive() && context.session.exists(sessionVariableName) );
 		}
 
 		public function requireLogin() {
