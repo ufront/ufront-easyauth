@@ -116,6 +116,9 @@ This allows you to use `import ufront.EasyAuth;` rather than having lots of impo
 	typedef EasyAuth = ufront.auth.EasyAuth;
 	@:noDoc @:noUsing typedef EasyAuthAdminMode = ufront.auth.EasyAuth.EasyAuthAdminMode;
 	@:noDoc @:noUsing typedef InlineEasyAuthMiddleware = ufront.auth.InlineEasyAuthMiddleware;
+#elseif client
+	@:noDoc @:noUsing typedef EasyAuthClient = ufront.auth.EasyAuthClient;
+	@:noDoc @:noUsing typedef InlineEasyAuthClientMiddleware = ufront.auth.InlineEasyAuthClientMiddleware;
 #end
 @:noDoc @:noUsing typedef EasyAuthDBAdapter = ufront.auth.EasyAuthDBAdapter;
 @:noDoc @:noUsing typedef EasyAuthLoginErrorMessage = ufront.auth.EasyAuthDBAdapter.EasyAuthLoginErrorMessage;
