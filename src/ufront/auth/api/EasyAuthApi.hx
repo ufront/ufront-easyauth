@@ -90,6 +90,25 @@ class EasyAuthApi extends UFApi {
 	}
 
 	/**
+	Get the currently logged in `User`.
+
+	The `salt` and `password` fields will not be included in the returned result.
+	As a result, it is recommended you do not call `save()` on these objects, or the passwords for this user will be reset.
+
+	If the user is currently logged in, this will return their `User` object as a `Success`.
+	If the user is not logged in, this will return `Success(null)`.
+	If an error is encountered this will return a `Failure`.
+	**/
+	public function getCurrentUser():Outcome<Null<User>,Error> {
+		return wrapInOutcome(function() {
+			var user = easyAuth.getCurrentUser();
+			if ( user!=null )
+				user.removeSensitiveData();
+			return user;
+		});
+	}
+
+	/**
 	Get a specific `User` object based on a database ID.
 
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
