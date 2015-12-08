@@ -70,7 +70,7 @@ When we load the permissions a user has, we will load all the permissions they h
 
 The assignment of permissions are stored in the `auth_permission` table.
 
-##### Using EasyAuth in Ufront
+### Using EasyAuth in Ufront
 
 `ufront.auth.EasyAuth` can be used as your `UFAuthHandler`.
 In fact, if you're compiling with the `ufront-easyuath` haxelib, EasyAuth will be the default UFAuthHandler set in your `UfrontConfiguration`.
@@ -104,7 +104,7 @@ By using a custom `UFAuthAdapter`, you could for example:
 - Check a password against an LDAP service
 - Use a 3rd party login system like OAuth
 
-##### Import shortcuts
+### Import shortcuts
 
 The `ufront.EasyAuth` module contains typedefs for commonly imported types in the `ufront-easyauth` package.
 
