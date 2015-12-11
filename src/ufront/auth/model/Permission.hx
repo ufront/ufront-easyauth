@@ -72,14 +72,4 @@ class Permission extends Object {
 		var enumName = Type.getEnumName(Type.getEnum(e));
 		return enumName + ":" + Type.enumConstructor(e);
 	}
-
-	/**
-	@deprecated This will be removed in a future version.
-
-	Please use `Permission.getPermissionString()` instead.
-	**/
-	@:deprecated("Deprecation: getPermissionID() has been renamed to getPermissionString()")
-	public static inline function getPermissionID( e:EnumValue ):String {
-		return getPermissionString( e );
-	}
 }
