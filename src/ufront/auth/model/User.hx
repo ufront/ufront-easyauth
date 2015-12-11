@@ -3,6 +3,7 @@ package ufront.auth.model;
 import ufront.ORM;
 import sys.db.Types;
 import ufront.auth.EasyAuthPermissions;
+using ufront.db.DBSerializationTools;
 using Lambda;
 
 /**
@@ -65,6 +66,12 @@ class UserProfile {
 
 The table name for `User` is `auth_user`.
 A unique index is applied to the `username` column.
+
+### Serialization
+
+By default the `salt` and `password` fields will not be included in serialization.
+This is to prevent sensitive data being transferred to the client with remoting.
+If you wish to override this behaviour, you can add both the `salt` and `password` fields to the `hxSerializationFields` array.
 **/
 @:table("auth_user")
 @:index(username,unique)
@@ -178,7 +185,6 @@ class User extends Object implements ufront.auth.UFAuthUser {
 		return true;
 	}
 
-
 	/**
 	If the user has the `EAPCanDoAnything` permission we consider them a super-user, and they'll pass all permission checks.
 	Please note when using the `EasyAuth` class we assume they are a super user if there are no super-users, because we consider the app to still be being set up.
@@ -228,12 +234,24 @@ class User extends Object implements ufront.auth.UFAuthUser {
 	}
 
 	/**
-	Remove the sensitive `this.salt` and `this.password` data.
-	If you are going to serialize this object to share publicly or send to the client, it would be wise to call this method first.
+	We override the default `hxSerializationFields` value to not include the sensitive `salt` and `password` fields.
 	**/
-	inline public function removeSensitiveData():Void {
-		this.salt = "";
-		this.password = "";
+	override function get_hxSerializationFields():Array<String> {
+		if ( hxSerializationFields==null ) {
+			super.get_hxSerializationFields();
+			hxSerializationFields.remove( "salt" );
+			hxSerializationFields.remove( "password" );
+		}
+		return hxSerializationFields;
+	}
+
+	/**
+	Include the private fields needed for `this.can()` permission checks in serialization.
+
+	Calling this before sending a user object to the client over remoting will allow you to check permissions on the client side.
+	**/
+	public function withPermissions():User {
+		return this.with( hasSuperUserPermission, allUserPermissions );
 	}
 
 	#if server

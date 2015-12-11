@@ -17,6 +17,9 @@ using Lambda;
 An API to conduct basic auth operations, from logging in to creating users and granting permissions.
 
 Any operations in this API that might require special permissions will use the `EasyAuthPermissions` enum to check the current user's permissions.
+
+**Warning:** When used with remoting, any `User` objects will not send the `password` or `salt` to the client.
+One thing to keep in mind is that this means you will not be able to send the object back to the server and save it directly, as it will have `salt` and `password` set to `null`, and the object will not be considered valid.
 **/
 class EasyAuthApi extends UFApi {
 
@@ -92,9 +95,6 @@ class EasyAuthApi extends UFApi {
 	/**
 	Get the currently logged in `User`.
 
-	The `salt` and `password` fields will not be included in the returned result.
-	As a result, it is recommended you do not call `save()` on these objects, or the passwords for this user will be reset.
-
 	If the user is currently logged in, this will return their `User` object as a `Success`.
 	If the user is not logged in, this will return `Success(null)`.
 	If an error is encountered this will return a `Failure`.
@@ -103,9 +103,7 @@ class EasyAuthApi extends UFApi {
 		return wrapInOutcome(function() {
 			var user = easyAuth.getCurrentUser();
 			if ( user!=null ) {
-				user.removeSensitiveData();
-				user.hxSerializationFields.push( "hasSuperUserPermission" );
-				user.hxSerializationFields.push( "allUserPermissions" );
+				user.withPermissions();
 			}
 			return user;
 		});
@@ -115,16 +113,11 @@ class EasyAuthApi extends UFApi {
 	Get a specific `User` object based on a database ID.
 
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
-
-	The `salt` and `password` fields will not be included in the returned result.
-	As a result, it is recommended you do not call `save()` on these objects, or the passwords for this user will be reset.
 	**/
 	public function getUser( userID:DatabaseID<User> ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
-			var user = User.manager.get( userID );
-			user.removeSensitiveData();
-			return user;
+			return User.manager.get( userID );
 		});
 	}
 
@@ -132,16 +125,11 @@ class EasyAuthApi extends UFApi {
 	Get a specific `User` object based on the username.
 
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
-
-	The `salt` and `password` fields will not be included in the returned result.
-	As a result, it is recommended you do not call `save()` on these objects, or the passwords for this user will be reset.
 	**/
 	public function getUserByUsername( username:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListAllUsers );
-			var user = User.manager.select( $username==username );
-			user.removeSensitiveData();
-			return user;
+			return User.manager.select( $username==username );
 		});
 	}
 
@@ -149,9 +137,6 @@ class EasyAuthApi extends UFApi {
 	Get a list of all `User` objects in the database.
 
 	This requires the `EasyAuthPermissions.EAPListAllUsers` permission.
-
-	The `salt` and `password` fields will not be included in the returned result.
-	As a result, it is recommended you do not call `save()` on these objects, or the passwords for those users will be reset.
 	**/
 	public function getAllUsers():Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
@@ -213,18 +198,12 @@ class EasyAuthApi extends UFApi {
 	Get a list of all users in a given group.
 
 	This requires the `EasyAuthPermissions.EAPListUsersInGroups` permission.
-
-	The `salt` and `password` fields will not be included in the returned result.
-	As a result, it is recommended you do not call `save()` on these objects, or the passwords for those users will be reset.
 	**/
 	public function getAllUsersInGroup( groupID:DatabaseID<Group> ):Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPListUsersInGroups );
 			var group = Group.manager.get( groupID );
-			var list = group.users.list();
-			for ( u in list )
-				u.removeSensitiveData();
-			return list;
+			return group.users.list();
 		});
 	}
 
@@ -255,16 +234,12 @@ class EasyAuthApi extends UFApi {
 	A random salt will be generated and used to set the password hash before saving.
 
 	This requires the `EasyAuthPermissions.EAPCreateUser` permission.
-
-	The `salt` and `password` fields will not be included in the returned user object.
-	As a result, it is recommended you do not call `save()` on this object, or the password for that users will be reset.
 	**/
 	public function createUser( username:String, password:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
 			easyAuth.requirePermission( EAPCreateUser );
 			var u = new User( username, password );
 			u.save();
-			u.removeSensitiveData();
 			return u;
 		});
 	}
