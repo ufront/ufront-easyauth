@@ -3,21 +3,21 @@
   "license": "MIT",
   "classPath": "src",
   "tags": ["ufront","web","auth","neko","php","auth"],
-  "description": "A basic database based user-group-permission authentication system for ufront.",
+  "description": "A basic database driven authentication system for Ufront, with Users, Groups and Permissions.",
   "contributors": ["fponticelli","jason"],
-  "releasenote": "
-- Updates for new ufront-mvc, minject.
-- Removed dependency on random and cleversort.
-- No longer use a type parameter for UFAuthHandler.
-- Allow EasyAuthApi to use a different AuthAdapter through dependency injection.
-- Regenerate the sessionID after login. (security measure)
-- Throw `tink.core.Error` objects rather than `AuthError`, so we get nice error messages.
+  "releasenote": "A 1.0.0 stable release.
+Some breaking API changes for future-proofing.
+New `EasyAuthClient` auth handler that loads the current user and permissions over remoting.
+New Ufront-ORM serialization prevents salt and password being sent to the client by default.
+Improved EasyAuthApi.
+Bug fixes and more.
+See CHANGES.md for full details.
 ",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0",
   "url": "https://github.com/ufront/ufront-easyauth",
   "dependencies": {
-    "PBKDF2": "",
-    "ufront-mvc": "",
-    "ufront-orm": ""
+    "PBKDF2": "1.0.0",
+    "ufront-mvc": "1.1.0",
+    "ufront-orm": "1.1.0"
   }
 }
