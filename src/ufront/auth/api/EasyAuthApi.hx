@@ -69,8 +69,9 @@ class EasyAuthApi extends UFApi {
 	Please note the session must be ready to use (having `HttpSession.init()` complete succesfully).
 	It just removes the User ID from the session, effectively logging you out.
 	**/
-	public function logout():Void {
+	public function logout():Noise {
 		easyAuth.endSession();
+		return Noise;
 	}
 
 	/**
