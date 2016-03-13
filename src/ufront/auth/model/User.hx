@@ -127,16 +127,16 @@ class User extends Object implements ufront.auth.UFAuthUser {
 	/**
 	Create a new user object.
 
-	This will not automatically save to the database.
-	If username or password are provided they will be set (and the salt/password hash generated) automatically.
+	This will not automatically save to the database, you must call `user.save()` manually.
+
+	@param username (optional) An initial username to set.
+	@param password (optional) An initial password to set using `this.setPassword()` (server-side only).
 	**/
 	public function new( ?username:String, ?password:String ) {
 		super();
-		#if server
-			this.username = username;
-			setPassword(password);
-			this.forcePasswordChange = false;
-		#end
+		this.username = username;
+		this.forcePasswordChange = false;
+		setPassword(password);
 	}
 
 	/**
