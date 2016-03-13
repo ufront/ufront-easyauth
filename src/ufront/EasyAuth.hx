@@ -126,6 +126,7 @@ This allows you to use `import ufront.EasyAuth;` rather than having lots of impo
 
 // `ufront.auth.api` package.
 @:noDoc @:noUsing typedef EasyAuthApi = ufront.auth.api.EasyAuthApi;
+@:noDoc @:noUsing typedef UnsafeEasyAuthApi = ufront.auth.api.UnsafeEasyAuthApi;
 @:noDoc @:noUsing typedef EasyAuthApiAsync = ufront.auth.api.EasyAuthApi.EasyAuthApiAsync;
 @:noDoc @:noUsing typedef EasyAuthApiAsyncCallback = ufront.auth.api.EasyAuthApi.EasyAuthApiAsyncCallback;
 

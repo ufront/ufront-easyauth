@@ -26,7 +26,14 @@ class EasyAuthApi extends UFApi {
 	#if server
 		@inject public var easyAuth:EasyAuth;
 		@inject public var injector:Injector;
+		var unsafeMode:Bool;
+
+		public function new() {
+			super();
+			unsafeMode = false;
+		}
 	#end
+
 
 	/**
 	Login and begin a session with the given username and password.
@@ -116,7 +123,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getUser( userID:DatabaseID<User> ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListAllUsers );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListAllUsers );
 			return User.manager.get( userID );
 		});
 	}
@@ -128,7 +136,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getUserByUsername( username:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListAllUsers );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListAllUsers );
 			return User.manager.select( $username==username );
 		});
 	}
@@ -140,7 +149,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getAllUsers():Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListAllUsers );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListAllUsers );
 			return User.manager.all();
 		});
 	}
@@ -152,7 +162,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getGroup( groupID:DatabaseID<Group> ):Outcome<Group,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListAllGroups );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListAllGroups );
 			return Group.manager.get( groupID );
 		});
 	}
@@ -164,7 +175,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getGroupByName( name:String ):Outcome<Group,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListAllGroups );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListAllGroups );
 			return Group.manager.select( $name==name );
 		});
 	}
@@ -176,7 +188,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getAllGroups():Outcome<List<Group>,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListAllGroups );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListAllGroups );
 			return Group.manager.all();
 		});
 	}
@@ -188,7 +201,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getAllGroupsForUser( userID:DatabaseID<User> ):Outcome<List<Group>,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListGroupsForUser );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListGroupsForUser );
 			var user = User.manager.get( userID );
 			return user.groups.list();
 		});
@@ -201,7 +215,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getAllUsersInGroup( groupID:DatabaseID<Group> ):Outcome<List<User>,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListUsersInGroups );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListUsersInGroups );
 			var group = Group.manager.get( groupID );
 			return group.users.list();
 		});
@@ -216,7 +231,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function getAllPermissionsForUser( userID:DatabaseID<User> ):Outcome<List<EnumValue>,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPListUserPermissions );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPListUserPermissions );
 			var user = User.manager.get( userID );
 			var groupIDs = [ for (g in user.groups) g.id ];
 			var permissions = Permission.manager.search( $userID==userID.toInt() || $groupID in groupIDs );
@@ -237,7 +253,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function createUser( username:String, password:String ):Outcome<User,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPCreateUser );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPCreateUser );
 			var u = new User( username, password );
 			u.save();
 			return u;
@@ -250,7 +267,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function createGroup( groupName:String ):Outcome<Group,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPCreateGroup );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPCreateGroup );
 			var g = new Group( groupName );
 			g.save();
 			return g;
@@ -258,12 +276,14 @@ class EasyAuthApi extends UFApi {
 	}
 
 	private function userAllowedToAssignToGroup( group:Group ):Void {
-		if ( !easyAuth.hasPermission( EAPAssignAnyGroup ) ) {
-			if ( easyAuth.hasPermission(EAPAssignOwnGroup) ) {
-				if ( easyAuth.getCurrentUser().groups.has(group)==false )
+		if ( unsafeMode==false ) {
+			if ( !easyAuth.hasPermission( EAPAssignAnyGroup ) ) {
+				if ( easyAuth.hasPermission(EAPAssignOwnGroup) ) {
+					if ( easyAuth.getCurrentUser().groups.has(group)==false )
 					throw HttpError.unauthorized( 'You are not in the group you are trying to assign users to' );
+				}
+				else throw HttpError.unauthorized( 'You do not have permission to assign users to groups' );
 			}
-			else throw HttpError.unauthorized( 'You do not have permission to assign users to groups' );
 		}
 	}
 
@@ -300,12 +320,14 @@ class EasyAuthApi extends UFApi {
 	}
 
 	private function userAllowedToAssignPermissions( permission:EnumValue ):Void {
-		if ( !easyAuth.hasPermission( EAPAssignAnyUserPermission ) ) {
-			if ( easyAuth.hasPermission(EAPAssignUserPermissionYouHave) ) {
-				if ( easyAuth.getCurrentUser().can(permission)==false )
+		if ( unsafeMode==false ) {
+			if ( !easyAuth.hasPermission( EAPAssignAnyUserPermission ) ) {
+				if ( easyAuth.hasPermission(EAPAssignUserPermissionYouHave) ) {
+					if ( easyAuth.getCurrentUser().can(permission)==false )
 					throw HttpError.unauthorized( 'You do not have the $permission permission, so you cannot give it to anyone' );
+				}
+				else throw HttpError.unauthorized( 'You do not have permission to assign permissions' );
 			}
-			else throw HttpError.unauthorized( 'You do not have permission to assign permissions' );
 		}
 	}
 
@@ -396,12 +418,14 @@ class EasyAuthApi extends UFApi {
 	}
 
 	private function userAllowedToEditUsers( user:User ):Void {
-		if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
-			if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
-				if ( easyAuth.getCurrentUser().id!=user.id )
+		if ( unsafeMode==false ) {
+			if ( !easyAuth.hasPermission( EAPEditAnyUser ) ) {
+				if ( easyAuth.hasPermission(EAPEditOwnUser) ) {
+					if ( easyAuth.getCurrentUser().id!=user.id )
 					throw HttpError.unauthorized( 'You are only allowed to edit your own user' );
+				}
+				else throw HttpError.unauthorized( 'You are not allowed to edit users, even your own' );
 			}
-			else throw HttpError.unauthorized( 'You are not allowed to edit users, even your own' );
 		}
 	}
 
@@ -430,7 +454,7 @@ class EasyAuthApi extends UFApi {
 	If the target user is not the currently logged in user, they must have the `EasyAuthPermissions.EAPEditAnyUser` permission.
 	**/
 	public function changeCurrentUserPassword( oldPassword:String, newPassword:String ):Surprise<Noise,Error> {
-		if ( easyAuth.hasPermission(EAPChangePasswordOwnUser)==false )
+		if ( unsafeMode==false && easyAuth.hasPermission(EAPChangePasswordOwnUser)==false )
 			return HttpError.authError( ANoPermission(EAPChangePasswordOwnUser) ).asBadSurprise();
 		var u = easyAuth.getCurrentUser();
 		if ( u==null )
@@ -460,7 +484,8 @@ class EasyAuthApi extends UFApi {
 	**/
 	public function changeAnyPassword( userID:DatabaseID<User>, newPassword:String ):Outcome<Noise,Error> {
 		return wrapInOutcome(function() {
-			easyAuth.requirePermission( EAPChangePasswordAnyUser );
+			if ( unsafeMode==false )
+				easyAuth.requirePermission( EAPChangePasswordAnyUser );
 			var u = User.manager.get( userID );
 			u.setPassword( newPassword );
 			u.save();
@@ -469,12 +494,14 @@ class EasyAuthApi extends UFApi {
 	}
 
 	private function userAllowedToEditGroups( group:Group ):Void {
-		if ( !easyAuth.hasPermission( EAPEditAnyGroup ) ) {
-			if ( easyAuth.hasPermission(EAPEditOwnGroup) ) {
-				if ( easyAuth.getCurrentUser().groups.has(group)==false )
+		if ( unsafeMode==false ) {
+			if ( !easyAuth.hasPermission( EAPEditAnyGroup ) ) {
+				if ( easyAuth.hasPermission(EAPEditOwnGroup) ) {
+					if ( easyAuth.getCurrentUser().groups.has(group)==false )
 					throw HttpError.unauthorized( 'You are only allowed to edit groups you are in' );
+				}
+				else throw HttpError.unauthorized( 'You are not allowed to edit groups, even one you are in' );
 			}
-			else throw HttpError.unauthorized( 'You are not allowed to edit groups, even one you are in' );
 		}
 	}
 
