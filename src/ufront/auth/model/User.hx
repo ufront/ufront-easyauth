@@ -79,9 +79,9 @@ class User extends Object implements ufront.auth.UFAuthUser {
 	/**
 	The username to use when logging in.
 
-	Must not be null, up to 40 characters long, no other validation is performed.
+	Must not be null, up to 255 characters long, no other validation is performed.
 	**/
-	public var username:SString<40>;
+	public var username:SString<255>;
 
 	/**
 	The randomly generated salt used for generating this user's password hash.
